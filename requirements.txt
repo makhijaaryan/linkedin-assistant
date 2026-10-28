@@ -1,0 +1,55 @@
+# LinkedIn Assistant — core dependencies (Python 3.11, macOS arm64 / Linux)
+# GPU-only training deps (QLoRA) live in requirements-gpu.txt and run on Colab/Kaggle.
+
+# --- core / config ---
+pydantic>=2.7
+jsonschema>=4.22
+pyyaml>=6.0
+python-dotenv>=1.0
+numpy>=1.26,<2.3
+pandas>=2.2
+pyarrow>=16.0
+tqdm>=4.66
+
+# --- data ingestion (R1) ---
+kaggle>=1.6
+datasets>=2.20
+datasketch>=1.6          # MinHash LSH dedupe
+pymupdf>=1.24            # CV PDF parsing
+python-docx>=1.1         # CV DOCX parsing
+
+# --- classical NLP baselines (R2, R3, R4) ---
+spacy>=3.7
+sklearn-crfsuite>=0.5    # CRF NER baseline
+scikit-learn>=1.5        # TF-IDF, logistic regression, K-means
+rank-bm25>=0.2.2
+
+# --- graph (R3) ---
+neo4j>=5.20
+networkx>=3.3            # Louvain fallback outside Neo4j GDS
+
+# --- dense retrieval & ranking (R4) ---
+torch>=2.3
+sentence-transformers>=3.0   # bi-encoder + cross-encoder
+faiss-cpu>=1.8
+lightgbm>=4.3                # LambdaMART
+ranx>=0.3.19                 # IR metrics + paired significance tests
+
+# --- LLM router & agents (R6, R7) ---
+openai>=1.40             # one OpenAI-compatible client for Ollama / Groq / OpenRouter
+langgraph>=0.2
+langchain-core>=0.3
+tenacity>=8.3            # retry with backoff
+
+# --- statistics (evaluation plan) ---
+scipy>=1.13
+statsmodels>=0.14
+
+# --- UI ---
+streamlit>=1.37
+
+# --- dev ---
+pytest>=8.2
+ruff>=0.5
+pre-commit>=3.7
+ipykernel>=6.29

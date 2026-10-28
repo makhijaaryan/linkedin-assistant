@@ -1,0 +1,31 @@
+# secrets
+.env
+kaggle.json
+
+# data (large / private) — keep folder structure only
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# router logs and caches may contain prompt text
+router/logs/
+.cache/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# models / indexes
+*.gguf
+*.faiss
+*.safetensors
+
+.DS_Store
+
+
+DECISIONS.md 
+CLAUDE.md

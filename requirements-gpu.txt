@@ -1,0 +1,7 @@
+# QLoRA training (R5) — install on Colab/Kaggle GPU only (bitsandbytes needs CUDA).
+-r requirements.txt
+transformers>=4.44
+peft>=0.12
+trl>=0.10
+accelerate>=0.33
+bitsandbytes>=0.43

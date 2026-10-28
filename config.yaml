@@ -1,0 +1,37 @@
+# Single shared config. Model swaps are one-line changes under `routes`.
+seed: 573
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  external: data/external
+  results: eval/results
+  router_log: router/logs/calls.jsonl
+
+providers:
+  ollama:     {base_url: http://localhost:11434/v1, api_key_env: null,               private_ok: true}
+  groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false}
+  openrouter: {base_url: https://openrouter.ai/api/v1,   api_key_env: OPENROUTER_API_KEY, private_ok: false}
+
+# task -> provider/model. Real CVs (private data) may only use providers with private_ok: true.
+routes:
+  extract_cv:       {provider: ollama,     model: llama3.1:8b}
+  extract_job:      {provider: groq,       model: llama-3.1-8b-instant}
+  normalize_tiebreak: {provider: ollama,   model: qwen2.5:7b}
+  explain:          {provider: ollama,     model: llama3.1:8b}
+  critic:           {provider: ollama,     model: qwen2.5:7b}
+  proprietary_baseline: {provider: openrouter, model: TBD}   # anonymized Kaggle text only
+
+llm:
+  temperature: 0
+  runs_per_model: 3
+  chunk_words: [200, 500]
+  chunk_overlap: 0.10
+
+stats:
+  alpha: 0.05
+  bootstrap_resamples: 10000
+  permutations: 10000
+  noninferiority_delta: {extraction_f1: 3.0, ndcg10: 0.02}
+  correction: holm
