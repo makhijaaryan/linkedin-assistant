@@ -29,5 +29,9 @@ __pycache__/
 
 DECISIONS.md 
 CLAUDE.md
+IMPLEMENTATION_STEPS.md
 # course-provided reference material (not ours to redistribute)
 project-given/
+
+# planning docs kept local
+IMPLEMENTATION_STEPS.md

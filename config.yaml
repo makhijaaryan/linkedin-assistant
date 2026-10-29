@@ -30,6 +30,13 @@ llm:
   chunk_words: [200, 500]
   chunk_overlap: 0.10
 
+data:                        # Phase 1 (R1) — frozen once ingest.build has run
+  dedupe: {num_perm: 128, shingle_words: 5, lsh_threshold: 0.9, handcheck_pairs: 200}
+  working_set: {jobs: 20000, resumes_kaggle: all, resumes_corpus: 2500}
+  splits: {train: 0.8, dev: 0.1, test: 0.1}
+  test_sets: {extraction_jobs: 75, extraction_resumes_kaggle: 45, extraction_resumes_corpus: 30,
+              ranking_profiles_kaggle: 25, ranking_profiles_corpus: 15}
+
 stats:
   alpha: 0.05
   bootstrap_resamples: 10000

@@ -1,0 +1,34 @@
+<!-- Label Studio config for Task A (entity extraction). Labels match ontology/ontology.py. -->
+<View>
+  <Header value="$doc_type — $doc_id"/>
+  <Labels name="label" toName="text">
+    <Label value="Skill" background="#4C9AFF"/>
+    <Label value="Requirement" background="#FF8B00"/>
+    <Label value="Experience" background="#36B37E"/>
+    <Label value="Credential" background="#6554C0"/>
+    <Label value="Project" background="#00B8D9"/>
+    <Label value="Company" background="#FF5630"/>
+    <Label value="Occupation" background="#FFC400"/>
+    <Label value="Location" background="#97A0AF"/>
+  </Labels>
+  <Text name="text" value="$text" granularity="word"/>
+
+  <!-- Per-region attributes, shown when a Requirement span is selected -->
+  <View visibleWhen="region-selected" whenLabelValue="Requirement">
+    <Header value="Requirement attributes"/>
+    <Choices name="importance" toName="text" perRegion="true" choice="single">
+      <Choice value="Required"/>
+      <Choice value="Preferred"/>
+    </Choices>
+    <Choices name="requirement_type" toName="text" perRegion="true" choice="single">
+      <Choice value="Skill"/>
+      <Choice value="Experience"/>
+      <Choice value="Education"/>
+      <Choice value="Credential"/>
+      <Choice value="Other"/>
+    </Choices>
+    <Number name="min_years" toName="text" perRegion="true" min="0" max="40"/>
+  </View>
+
+  <TextArea name="notes" toName="text" placeholder="Notes / uncertainties" rows="2"/>
+</View>

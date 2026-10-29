@@ -1,0 +1,304 @@
+{
+  "$defs": {
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "quote": {
+          "description": "Verbatim text copied from the document that supports this item.",
+          "title": "Quote",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "Extractor's confidence that the item is correct.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "char_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filled in by code, not by the extractor.",
+          "title": "Char Start"
+        },
+        "char_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filled in by code, not by the extractor.",
+          "title": "Char End"
+        }
+      },
+      "required": [
+        "quote",
+        "confidence"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "JobItem": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "company": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Company"
+        },
+        "seniority": {
+          "default": "Unknown",
+          "enum": [
+            "Internship",
+            "Entry level",
+            "Associate",
+            "Mid-Senior level",
+            "Director",
+            "Executive",
+            "Unknown"
+          ],
+          "title": "Seniority",
+          "type": "string"
+        },
+        "employment_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "Full-time",
+                "Part-time",
+                "Contract",
+                "Temporary",
+                "Internship",
+                "Volunteer",
+                "Other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Employment Type"
+        },
+        "work_mode": {
+          "default": "Unknown",
+          "enum": [
+            "On-site",
+            "Remote",
+            "Hybrid",
+            "Unknown"
+          ],
+          "title": "Work Mode",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocationItem"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "JobItem",
+      "type": "object"
+    },
+    "LocationItem": {
+      "additionalProperties": false,
+      "properties": {
+        "city": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "is_remote": {
+          "default": false,
+          "title": "Is Remote",
+          "type": "boolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "evidence"
+      ],
+      "title": "LocationItem",
+      "type": "object"
+    },
+    "RequirementItem": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "description": "The requirement, close to how the posting words it.",
+          "title": "Text",
+          "type": "string"
+        },
+        "requirement_type": {
+          "enum": [
+            "Skill",
+            "Experience",
+            "Education",
+            "Credential",
+            "Other"
+          ],
+          "title": "Requirement Type",
+          "type": "string"
+        },
+        "importance": {
+          "enum": [
+            "Required",
+            "Preferred"
+          ],
+          "title": "Importance",
+          "type": "string"
+        },
+        "min_years": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Years"
+        },
+        "education_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "High School",
+                "Associate",
+                "Bachelor",
+                "Master",
+                "Doctorate",
+                "None stated"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Education Level"
+        },
+        "skills": {
+          "description": "Skill names this requirement targets.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "text",
+        "requirement_type",
+        "importance",
+        "evidence"
+      ],
+      "title": "RequirementItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One job posting, extracted. Ontology: JobPosting + POSTED_BY/HAS_REQUIREMENT/TARGETS.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "extractor": {
+      "title": "Extractor",
+      "type": "string"
+    },
+    "extractor_version": {
+      "title": "Extractor Version",
+      "type": "string"
+    },
+    "job": {
+      "$ref": "#/$defs/JobItem"
+    },
+    "requirements": {
+      "items": {
+        "$ref": "#/$defs/RequirementItem"
+      },
+      "title": "Requirements",
+      "type": "array"
+    }
+  },
+  "required": [
+    "doc_id",
+    "extractor",
+    "extractor_version",
+    "job"
+  ],
+  "title": "ParsedJob",
+  "type": "object"
+}

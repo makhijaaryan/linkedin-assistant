@@ -1,0 +1,56 @@
+{
+  "seed": 573,
+  "load": {
+    "jobs_loaded": 123849,
+    "jobs_with_text": 123842,
+    "jobs_contacts_masked": 58063,
+    "resumes_kaggle": 2484,
+    "resumes_corpus": 29783,
+    "resumes_contacts_masked": 23167
+  },
+  "dedupe": {
+    "job_clusters": 103402,
+    "job_duplicates_removed": 20440,
+    "job_near_dup_pairs": 317914,
+    "resume_clusters": 29971,
+    "resume_duplicates_removed": 2295,
+    "resume_near_dup_pairs": 4109
+  },
+  "working_set": {
+    "jobs": 20000,
+    "resumes": 4981
+  },
+  "splits": {
+    "jobs": {
+      "train": 98948,
+      "test": 12612,
+      "dev": 12282
+    },
+    "resumes": {
+      "train": 25809,
+      "test": 3246,
+      "dev": 3211
+    }
+  },
+  "leakage": {
+    "jobs": {
+      "docs_in_multiple_splits": 0,
+      "clusters_spanning_splits": 0,
+      "test_docs_with_train_neighbor_jaccard>=0.8": 2740,
+      "test_docs": 12612
+    },
+    "resumes": {
+      "docs_in_multiple_splits": 0,
+      "clusters_spanning_splits": 0,
+      "test_docs_with_train_neighbor_jaccard>=0.8": 67,
+      "test_docs": 3246
+    }
+  },
+  "test_sets": {
+    "extraction_docs": 150,
+    "extraction_jobs": 75,
+    "extraction_cvs": 75,
+    "ranking_profiles": 40
+  },
+  "seconds": 378.6
+}

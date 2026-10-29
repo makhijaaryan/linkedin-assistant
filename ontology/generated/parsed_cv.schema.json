@@ -1,0 +1,485 @@
+{
+  "$defs": {
+    "CandidateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Headline"
+        },
+        "total_years_experience": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Years Experience"
+        },
+        "seniority": {
+          "default": "Unknown",
+          "enum": [
+            "Internship",
+            "Entry level",
+            "Associate",
+            "Mid-Senior level",
+            "Director",
+            "Executive",
+            "Unknown"
+          ],
+          "title": "Seniority",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocationItem"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CandidateItem",
+      "type": "object"
+    },
+    "CredentialItem": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "credential_type": {
+          "enum": [
+            "Degree",
+            "Certification",
+            "License",
+            "Course"
+          ],
+          "title": "Credential Type",
+          "type": "string"
+        },
+        "level": {
+          "anyOf": [
+            {
+              "enum": [
+                "High School",
+                "Associate",
+                "Bachelor",
+                "Master",
+                "Doctorate",
+                "None stated"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Level"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "issuer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Issuer"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "name",
+        "credential_type",
+        "evidence"
+      ],
+      "title": "CredentialItem",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "quote": {
+          "description": "Verbatim text copied from the document that supports this item.",
+          "title": "Quote",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "Extractor's confidence that the item is correct.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "char_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filled in by code, not by the extractor.",
+          "title": "Char Start"
+        },
+        "char_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filled in by code, not by the extractor.",
+          "title": "Char End"
+        }
+      },
+      "required": [
+        "quote",
+        "confidence"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "ExperienceItem": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "company": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Company"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocationItem"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "YYYY or YYYY-MM",
+          "title": "Start Date"
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "YYYY, YYYY-MM or 'Present'",
+          "title": "End Date"
+        },
+        "is_current": {
+          "default": false,
+          "title": "Is Current",
+          "type": "boolean"
+        },
+        "employment_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "Full-time",
+                "Part-time",
+                "Contract",
+                "Temporary",
+                "Internship",
+                "Volunteer",
+                "Other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Employment Type"
+        },
+        "skills_used": {
+          "description": "Skill names applied in this role.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills Used",
+          "type": "array"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "title",
+        "evidence"
+      ],
+      "title": "ExperienceItem",
+      "type": "object"
+    },
+    "LocationItem": {
+      "additionalProperties": false,
+      "properties": {
+        "city": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "is_remote": {
+          "default": false,
+          "title": "Is Remote",
+          "type": "boolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "evidence"
+      ],
+      "title": "LocationItem",
+      "type": "object"
+    },
+    "ProjectItem": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "skills_used": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills Used",
+          "type": "array"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "name",
+        "evidence"
+      ],
+      "title": "ProjectItem",
+      "type": "object"
+    },
+    "SkillItem": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The skill as written, e.g. 'PyTorch'. Normalized to O*NET later.",
+          "title": "Name",
+          "type": "string"
+        },
+        "skill_type": {
+          "enum": [
+            "Tool/Technology",
+            "Technical",
+            "Soft",
+            "Domain Knowledge",
+            "Language"
+          ],
+          "title": "Skill Type",
+          "type": "string"
+        },
+        "proficiency": {
+          "default": "Unstated",
+          "enum": [
+            "Beginner",
+            "Intermediate",
+            "Advanced",
+            "Expert",
+            "Unstated"
+          ],
+          "title": "Proficiency",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "name",
+        "skill_type",
+        "evidence"
+      ],
+      "title": "SkillItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One CV, extracted. Ontology: Candidate + HAS_SKILL/HELD/EARNED/BUILT.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "extractor": {
+      "description": "e.g. 'ollama/llama3.1:8b' or 'crf-baseline'",
+      "title": "Extractor",
+      "type": "string"
+    },
+    "extractor_version": {
+      "title": "Extractor Version",
+      "type": "string"
+    },
+    "candidate": {
+      "$ref": "#/$defs/CandidateItem"
+    },
+    "skills": {
+      "items": {
+        "$ref": "#/$defs/SkillItem"
+      },
+      "title": "Skills",
+      "type": "array"
+    },
+    "experiences": {
+      "items": {
+        "$ref": "#/$defs/ExperienceItem"
+      },
+      "title": "Experiences",
+      "type": "array"
+    },
+    "credentials": {
+      "items": {
+        "$ref": "#/$defs/CredentialItem"
+      },
+      "title": "Credentials",
+      "type": "array"
+    },
+    "projects": {
+      "items": {
+        "$ref": "#/$defs/ProjectItem"
+      },
+      "title": "Projects",
+      "type": "array"
+    }
+  },
+  "required": [
+    "doc_id",
+    "extractor",
+    "extractor_version",
+    "candidate"
+  ],
+  "title": "ParsedCV",
+  "type": "object"
+}

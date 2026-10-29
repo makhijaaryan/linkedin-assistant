@@ -1,0 +1,276 @@
+{
+  "version": "1.0.0",
+  "entities": {
+    "Candidate": {
+      "descriptor": "The person a CV describes. One per CV; the anchor for everything the candidate claims.",
+      "attributes": {
+        "candidate_id": "String",
+        "headline": "String",
+        "total_years_experience": "Number",
+        "seniority": "Enumeration: Internship, Entry level, Associate, Mid-Senior level, Director, Executive, Unknown"
+      }
+    },
+    "JobPosting": {
+      "descriptor": "An advertised position with the conditions an applicant must meet.",
+      "attributes": {
+        "job_id": "String",
+        "title": "String",
+        "seniority": "Enumeration: Internship, Entry level, Associate, Mid-Senior level, Director, Executive, Unknown",
+        "employment_type": "Enumeration: Full-time, Part-time, Contract, Temporary, Internship, Volunteer, Other",
+        "work_mode": "Enumeration: On-site, Remote, Hybrid, Unknown",
+        "salary_min": "Number",
+        "salary_max": "Number",
+        "currency": "String"
+      }
+    },
+    "Company": {
+      "descriptor": "An organization that posts jobs or employed a candidate.",
+      "attributes": {
+        "name": "String",
+        "industry": "String"
+      }
+    },
+    "Occupation": {
+      "descriptor": "A standardized role from the O*NET-SOC taxonomy; lets differently worded titles meet.",
+      "attributes": {
+        "onet_soc_code": "String",
+        "title": "String"
+      }
+    },
+    "Skill": {
+      "descriptor": "A capability a person can have and a job can ask for, normalized to an O*NET entry.",
+      "attributes": {
+        "canonical_name": "String",
+        "skill_type": "Enumeration: Tool/Technology, Technical, Soft, Domain Knowledge, Language",
+        "taxonomy_id": "String",
+        "category": "String",
+        "hot_technology": "Boolean"
+      }
+    },
+    "Requirement": {
+      "descriptor": "One condition a posting places on applicants (a claim the candidate's evidence must satisfy).",
+      "attributes": {
+        "text": "String",
+        "requirement_type": "Enumeration: Skill, Experience, Education, Credential, Other",
+        "importance": "Enumeration: Required, Preferred",
+        "min_years": "Number",
+        "education_level": "Enumeration: High School, Associate, Bachelor, Master, Doctorate, None stated"
+      }
+    },
+    "Experience": {
+      "descriptor": "A role the candidate held for a period of time.",
+      "attributes": {
+        "title": "String",
+        "start_date": "String (YYYY or YYYY-MM)",
+        "end_date": "String (YYYY, YYYY-MM or Present)",
+        "duration_years": "Number",
+        "is_current": "Boolean",
+        "employment_type": "Enumeration: Full-time, Part-time, Contract, Temporary, Internship, Volunteer, Other"
+      }
+    },
+    "Credential": {
+      "descriptor": "A degree, certification, license or course the candidate earned.",
+      "attributes": {
+        "name": "String",
+        "credential_type": "Enumeration: Degree, Certification, License, Course",
+        "level": "Enumeration: High School, Associate, Bachelor, Master, Doctorate, None stated",
+        "field": "String",
+        "issuer": "String",
+        "year": "Number"
+      }
+    },
+    "Project": {
+      "descriptor": "A piece of work the candidate built, outside or within a role.",
+      "attributes": {
+        "name": "String",
+        "description": "String"
+      }
+    },
+    "Location": {
+      "descriptor": "A place a job is based or a candidate lives; remote work is a location flag.",
+      "attributes": {
+        "city": "String",
+        "state": "String",
+        "country": "String",
+        "is_remote": "Boolean"
+      }
+    },
+    "Evidence": {
+      "descriptor": "The exact source span a fact was extracted from. Every extracted fact must point to one.",
+      "attributes": {
+        "evidence_id": "String",
+        "doc_id": "String",
+        "doc_type": "Enumeration: CV, JobPosting",
+        "char_start": "Number",
+        "char_end": "Number",
+        "text": "String",
+        "extractor": "String",
+        "extractor_version": "String",
+        "confidence": "Number (0-1)"
+      }
+    }
+  },
+  "relations": [
+    {
+      "name": "HAS_SKILL",
+      "source": [
+        "Candidate"
+      ],
+      "target": [
+        "Skill"
+      ],
+      "descriptor": "The candidate claims this skill anywhere in the CV (attr: proficiency)."
+    },
+    {
+      "name": "HELD",
+      "source": [
+        "Candidate"
+      ],
+      "target": [
+        "Experience"
+      ],
+      "descriptor": "The candidate held this role."
+    },
+    {
+      "name": "EARNED",
+      "source": [
+        "Candidate"
+      ],
+      "target": [
+        "Credential"
+      ],
+      "descriptor": "The candidate earned this degree, certification or license."
+    },
+    {
+      "name": "BUILT",
+      "source": [
+        "Candidate"
+      ],
+      "target": [
+        "Project"
+      ],
+      "descriptor": "The candidate built this project."
+    },
+    {
+      "name": "AT",
+      "source": [
+        "Experience"
+      ],
+      "target": [
+        "Company"
+      ],
+      "descriptor": "The role was held at this company."
+    },
+    {
+      "name": "AS_ROLE",
+      "source": [
+        "Experience"
+      ],
+      "target": [
+        "Occupation"
+      ],
+      "descriptor": "The role normalizes to this O*NET occupation."
+    },
+    {
+      "name": "USED",
+      "source": [
+        "Experience",
+        "Project"
+      ],
+      "target": [
+        "Skill"
+      ],
+      "descriptor": "The skill was applied in this role or project."
+    },
+    {
+      "name": "POSTED_BY",
+      "source": [
+        "JobPosting"
+      ],
+      "target": [
+        "Company"
+      ],
+      "descriptor": "The company advertising the job."
+    },
+    {
+      "name": "FOR_ROLE",
+      "source": [
+        "JobPosting"
+      ],
+      "target": [
+        "Occupation"
+      ],
+      "descriptor": "The job normalizes to this O*NET occupation."
+    },
+    {
+      "name": "HAS_REQUIREMENT",
+      "source": [
+        "JobPosting"
+      ],
+      "target": [
+        "Requirement"
+      ],
+      "descriptor": "The posting states this requirement."
+    },
+    {
+      "name": "TARGETS",
+      "source": [
+        "Requirement"
+      ],
+      "target": [
+        "Skill"
+      ],
+      "descriptor": "The requirement asks for this skill."
+    },
+    {
+      "name": "LOCATED_IN",
+      "source": [
+        "Candidate",
+        "JobPosting",
+        "Company"
+      ],
+      "target": [
+        "Location"
+      ],
+      "descriptor": "Where the entity is based."
+    },
+    {
+      "name": "RELATED_TO",
+      "source": [
+        "Skill"
+      ],
+      "target": [
+        "Skill"
+      ],
+      "descriptor": "The skills are closely related (attrs: source, weight, inferred=true when not from the taxonomy)."
+    },
+    {
+      "name": "TYPICAL_FOR",
+      "source": [
+        "Skill"
+      ],
+      "target": [
+        "Occupation"
+      ],
+      "descriptor": "O*NET lists the skill as used in this occupation (attr: hot_technology)."
+    },
+    {
+      "name": "SUPPORTED_BY",
+      "source": [
+        "Candidate",
+        "JobPosting",
+        "Company",
+        "Skill",
+        "Requirement",
+        "Experience",
+        "Credential",
+        "Project",
+        "Location"
+      ],
+      "target": [
+        "Evidence"
+      ],
+      "descriptor": "The fact is grounded in this source span. Extracted relationships also carry evidence_ids."
+    }
+  ]
+}

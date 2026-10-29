@@ -37,7 +37,8 @@ QLoRA training (R5) needs CUDA, so run it on Colab/Kaggle with `pip install -r r
 | Folder | Thread |
 |---|---|
 | `data/` | raw / interim / processed / external (git-ignored) |
-| `ontology/` | R1: JSON Schema + Pydantic models |
+| `ontology/` | R1: ontology spec, extraction schema; `python -m ontology.build` → `ontology/generated/` |
+| `ingest/` | R1: load, clean/mask, dedupe, splits, test sets; `python -m ingest.build` |
 | `extraction/` | R2, R5: CRF baseline, LLM extraction, LoRA |
 | `graph/` | R3: normalization, Neo4j load |
 | `ranking/` | R4: lexical, dense, RRF, LambdaMART, cross-encoder |
