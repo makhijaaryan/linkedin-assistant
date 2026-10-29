@@ -12,16 +12,17 @@ paths:
 providers:
   ollama:     {base_url: http://localhost:11434/v1, api_key_env: null,               private_ok: true}
   groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false}
-  openrouter: {base_url: https://openrouter.ai/api/v1,   api_key_env: OPENROUTER_API_KEY, private_ok: false}
+  gemini:     {base_url: https://generativelanguage.googleapis.com/v1beta/openai/, api_key_env: GEMINI_API_KEY, private_ok: false}
+  openrouter: {base_url: https://openrouter.ai/api/v1,   api_key_env: OPENROUTER_API_KEY, private_ok: false, enabled: false}  # optional fallback
 
 # task -> provider/model. Real CVs (private data) may only use providers with private_ok: true.
 routes:
   extract_cv:       {provider: ollama,     model: llama3.1:8b}
-  extract_job:      {provider: groq,       model: llama-3.1-8b-instant}
+  extract_job:      {provider: groq,       model: openai/gpt-oss-20b}   # Groq no longer hosts Llama; also gpt-oss-120b, qwen/qwen3.8-27b
   normalize_tiebreak: {provider: ollama,   model: qwen2.5:7b}
   explain:          {provider: ollama,     model: llama3.1:8b}
   critic:           {provider: ollama,     model: qwen2.5:7b}
-  proprietary_baseline: {provider: openrouter, model: TBD}   # anonymized Kaggle text only
+  proprietary_baseline: {provider: gemini, model: gemini-2.5-flash}   # anonymized Kaggle text only (free tier may train on prompts)
 
 llm:
   temperature: 0

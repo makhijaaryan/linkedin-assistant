@@ -99,9 +99,9 @@ def check_neo4j():
 def check_api_keys():
     from dotenv import load_dotenv
     load_dotenv()
-    for key in ("GROQ_API_KEY", "OPENROUTER_API_KEY"):
+    for key in ("GROQ_API_KEY", "GEMINI_API_KEY"):
         report(OK if os.getenv(key) else WARN, key, "set" if os.getenv(key) else "not set in .env")
-    kaggle_files = ("~/.kaggle/kaggle.json", "~/.kaggle/access_token")
+    kaggle_files = ("~/.kaggle/kaggle.json", "~/.kaggle/access_token", "~/.kaggle/credentials.json")
     kaggle_ok = (any(os.path.exists(os.path.expanduser(f)) for f in kaggle_files)
                  or os.getenv("KAGGLE_KEY") or os.getenv("KAGGLE_API_TOKEN"))
     report(OK if kaggle_ok else WARN, "Kaggle credentials", "found" if kaggle_ok else "missing (run `kaggle auth login`)")
