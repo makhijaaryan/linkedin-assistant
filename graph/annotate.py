@@ -95,7 +95,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--make", action="store_true")
     ap.add_argument("--score", action="store_true")
-    ap.add_argument("--extractions", nargs="*", default=["groq__openai__gpt-oss-20b", "ollama__llama3.1-8b"])
+    ap.add_argument("--extractions", nargs="*", default=["asu__gpt-oss-120b", "ollama__llama3.1-8b"])
     a = ap.parse_args()
     if a.make:
         make(a.extractions)

@@ -3,7 +3,7 @@
   python -m extraction.run --set test --extractor crf
   python -m extraction.run --set test --extractor benchmark --runs 3         # every model in config benchmark_models
   python -m extraction.run --set test --extractor ollama/llama3.1:8b --runs 1
-  python -m extraction.run --set graph --extractor route                    # config routes (jobs: Groq, CVs: Ollama)
+  python -m extraction.run --set graph --extractor route                    # config routes (jobs: ASU Voyager, CVs: Ollama)
 
 Sets: test (150 gold docs), profiles (40 ranking CVs), graph (profiles + data/processed/graph_pool.txt jobs),
 ids:<file> (one doc_id per line). Private docs (source not in config public_sources) are skipped for

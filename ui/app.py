@@ -166,8 +166,8 @@ with tab_router:
     st.markdown("**Privacy check**")
     if st.button("Try sending a private CV to a hosted model"):
         try:
-            router.chat("test", [{"role": "user", "content": "hi"}], private=True, provider="groq",
-                        model="openai/gpt-oss-20b")
+            router.chat("test", [{"role": "user", "content": "hi"}], private=True, provider="asu",
+                        model="gpt-oss-120b")
         except PrivacyError as e:
             st.warning(f"Blocked by the router: {e}")
 

@@ -42,7 +42,7 @@ def test_salvage_keeps_valid_items():
 def test_router_blocks_private_data_on_hosted_provider():
     r = Router()
     with pytest.raises(PrivacyError):
-        r.chat("extract_job", [{"role": "user", "content": "x"}], private=True, provider="groq", model="openai/gpt-oss-20b")
+        r.chat("extract_job", [{"role": "user", "content": "x"}], private=True, provider="asu", model="gpt-oss-120b")
 
 
 def test_stats_sanity():

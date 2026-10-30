@@ -1,6 +1,6 @@
 """RQ3 ablation: free-form (subject, predicate, object) extraction with no ontology, same model and documents.
 
-  python -m extraction.spo --set graph --extractor groq/openai/gpt-oss-20b
+  python -m extraction.spo --set graph --extractor asu/gpt-oss-120b
 Output: data/processed/extractions/spo__<extractor>/run0.jsonl, one {"doc_id", "triples", "stats"} per doc.
 """
 
@@ -34,7 +34,7 @@ def extract(router: Router, doc_id: str, text: str, *, private: bool, provider: 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--set", default="graph")
-    ap.add_argument("--extractor", default="groq/openai/gpt-oss-20b")
+    ap.add_argument("--extractor", default="asu/gpt-oss-120b")
     a = ap.parse_args()
     router = Router()
     provider, model = a.extractor.split("/", 1)

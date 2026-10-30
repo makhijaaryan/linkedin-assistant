@@ -1,7 +1,7 @@
 """R2 / RQ1 extraction benchmark: per-type P/R/F1 against the 150 gold docs, plus the pre-registered tests.
 
   python -m eval.extraction_eval                         # gold = Label Studio export (see GOLD)
-  python -m eval.extraction_eval --dry-run-gold groq__openai__gpt-oss-120b   # pipeline check only, NOT a result
+  python -m eval.extraction_eval --dry-run-gold asu__gpt-oss-120b   # pipeline check only, NOT a result
 
 Matching rule (D21, fixed before any gold exists): per doc and label, gold spans with the same normalized
 text form one entity (any mention counts). A predicted entity matches a gold entity of the same label if
@@ -285,9 +285,11 @@ def main():
                 for m in cfg["benchmark_models"] if m.get("proprietary"))
     local = {f"{m['provider']}__{m['model']}".replace("/", "__").replace(":", "-")
              for m in cfg["benchmark_models"] if cfg["providers"][m["provider"]]["private_ok"]}
+    # only the configured benchmark (+ CRF, + the QLoRA student): older partial runs (Groq, Gemini; D31) stay on disk
+    wanted = {f"{m['provider']}__{m['model']}".replace("/", "__").replace(":", "-") for m in cfg["benchmark_models"]}
     results = {}
     for d in sorted(p for p in EXTRACTIONS.iterdir() if p.is_dir() and not p.name.startswith("spo")):
-        if d.name == a.dry_run_gold:
+        if d.name == a.dry_run_gold or not (d.name in wanted or d.name == "crf" or "qlora" in d.name):
             continue
         runs = [r for r in load_runs(d) if r]
         if not runs or not set(gold) & set.intersection(*(set(r) for r in runs)):

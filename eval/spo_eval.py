@@ -1,6 +1,6 @@
 """RQ3: ontology-guided vs. free-form SPO extraction, on the same documents and model.
 
-  python -m eval.spo_eval --spo spo__groq__openai__gpt-oss-20b --ontology groq__openai__gpt-oss-20b
+  python -m eval.spo_eval --spo spo__asu__gpt-oss-120b --ontology asu__gpt-oss-120b
 
 1. Duplicate-node rate: entity nodes that are the same concept under another surface form. Both graphs are
    scored with the same procedure: nodes are merged when they share a taxonomy id or their embeddings have

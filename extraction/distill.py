@@ -1,8 +1,8 @@
 """R5 / RQ2 distillation data: teacher labels -> per-chunk chat examples for QLoRA (notebooks/qlora_extraction.ipynb).
 
   python -m extraction.distill --make-set 1500          # stratified train-split docs (public sources: hosted teacher)
-  python -m extraction.run --set ids:data/processed/distill/teacher_ids.txt --extractor groq/openai/gpt-oss-120b
-  python -m extraction.distill --export groq__openai__gpt-oss-120b
+  python -m extraction.run --set ids:data/processed/distill/teacher_ids.txt --extractor asu/gpt-oss-120b
+  python -m extraction.distill --export asu__gpt-oss-120b
         -> data/processed/distill/{train,val}.jsonl and hand_correct_100.jsonl (fix these by hand; kept out of train)
 
 Each merged teacher output is split back into its chunks: an item belongs to the chunk its evidence offset
@@ -72,6 +72,8 @@ def export(teacher: str, n_hand: int = 100, val_share: float = 0.05):
     rows = [json.loads(x) for x in open(Path("data/processed/extractions") / teacher / "run0.jsonl") if x.strip()]
     from extraction.run import load_docs
     docs = load_docs(f"ids:{OUT / 'teacher_ids.txt'}").set_index("doc_id")
+    # the teacher's run0 also holds its test-set and graph-pool extractions: keep teacher-set (train split) docs only
+    rows = [r for r in rows if r["parsed"]["doc_id"] in docs.index]
     random.Random(SEED).shuffle(rows)
     hand, rest = rows[:n_hand], rows[n_hand:]
     n_val = max(1, int(len(rest) * val_share))

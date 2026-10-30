@@ -45,7 +45,7 @@ def make():
     public = set(router.cfg["public_sources"])
     src = pd.read_parquet("data/processed/resumes.parquet", columns=["doc_id", "source"]).set_index("doc_id")["source"]
     prop = router.route("proprietary_baseline")
-    hosted_open = ("groq", "openai/gpt-oss-120b")
+    hosted_open = ("asu", "gpt-oss-120b")
     rows, raw = [], []
     for n, (cid, jid) in enumerate(pairs()):
         facts = bundle(cid, jid)
@@ -94,7 +94,8 @@ def score() -> dict:
                                    "explanation_level_all_supported": float(g.groupby("pair")["ok"].min().mean())}
                                for m, g in df.groupby("method")}
         # open vs. proprietary on the same pairs: explanation-level "fully faithful", McNemar
-        prop = next((m for m in out["faithfulness"] if "gemini" in m), None)
+        p, m = Router().route("proprietary_baseline")
+        prop = f"llm:{p}/{m}" if f"llm:{p}/{m}" in out["faithfulness"] else None
         if prop:
             full = df.groupby(["method", "pair"])["ok"].min().unstack(0)
             out["mcnemar_vs_proprietary"] = {}

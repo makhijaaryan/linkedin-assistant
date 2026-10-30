@@ -11,8 +11,10 @@ paths:
 
 providers:            # rpm: client-side throttle under the free-tier limit; 429s are also retried with backoff
   ollama:     {base_url: http://localhost:11434/v1, api_key_env: null,               private_ok: true}
-  groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false, rpm: 6}   # free tier: 1K req/day, 8K tokens/min per model
-  gemini:     {base_url: https://generativelanguage.googleapis.com/v1beta/openai/, api_key_env: GEMINI_API_KEY, private_ok: false, rpm: 8}
+  asu:        {base_url: https://openai.rc.asu.edu/v1, api_key_env: ASU_API_KEY, private_ok: false, rpm: 120}  # ASU Voyager gateway, free (D31); 30-call burst ran at ~300/min without 429s
+  azure:      {base_url: https://gemini.openai.azure.com/openai/v1, api_key_env: AZURE_OPENAI_API_KEY, private_ok: false, rpm: 30}  # proprietary baseline only (D31); billed
+  groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false, rpm: 6}   # superseded by asu (D31); free tier: 1K req/day, 200K tokens/day per model
+  gemini:     {base_url: https://generativelanguage.googleapis.com/v1beta/openai/, api_key_env: GEMINI_API_KEY, private_ok: false, rpm: 8, enabled: false}  # superseded by azure (D31)
   openrouter: {base_url: https://openrouter.ai/api/v1,   api_key_env: OPENROUTER_API_KEY, private_ok: false, enabled: false}  # optional fallback
 
 # Only documents from these sources may go to hosted providers (D2: "anonymized Kaggle text").
@@ -22,39 +24,47 @@ public_sources: [kaggle_linkedin_postings, kaggle_resume_dataset]
 # task -> provider/model. Real CVs (private data) may only use providers with private_ok: true.
 routes:
   extract_cv:       {provider: ollama,     model: llama3.1:8b}
-  extract_job:      {provider: groq,       model: openai/gpt-oss-20b, fallback: {provider: ollama, model: llama3.1:8b}}   # Groq no longer hosts Llama
+  extract_job:      {provider: asu,        model: gpt-oss-120b, fallback: {provider: ollama, model: llama3.1:8b}}
   normalize_tiebreak: {provider: ollama,   model: qwen2.5:7b}
   infer_edges:      {provider: ollama,     model: qwen2.5:7b}
   explain:          {provider: ollama,     model: llama3.1:8b}
   critic:           {provider: ollama,     model: qwen2.5:7b}
   optimize_profile: {provider: ollama,     model: llama3.1:8b}
   research:         {provider: ollama,     model: llama3.1:8b}
-  judge_relevance:  {provider: groq,       model: openai/gpt-oss-120b}  # only if D-relevance-judge is approved; public text only
+  judge_relevance:  {provider: asu,        model: gpt-oss-120b}  # secondary judge only (D28); public text only
   chat:             {provider: ollama,     model: llama3.1:8b}
-  proprietary_baseline: {provider: gemini, model: gemini-3.8-flash}   # anonymized Kaggle text only (free tier may train on prompts); 2.5-flash now 404s (D20)
+  proprietary_baseline: {provider: azure, model: gpt-5-mini}   # anonymized Kaggle text only (D2, D31)
 
-# RQ1 extraction benchmark: every model runs the same prompt on the same 150 docs, 3 runs each.
+# RQ1 extraction benchmark: every model runs the same prompt on the same 150 docs (hosted: the 120 public ones).
+# Runs per model: 3 for hosted models, 1 for local Ollama (D25).
 benchmark_models:
   - {provider: ollama, model: llama3.1:8b}
   - {provider: ollama, model: qwen2.5:7b}
   - {provider: ollama, model: gemma2:9b}
-  - {provider: groq,   model: openai/gpt-oss-20b}
-  - {provider: groq,   model: openai/gpt-oss-120b}
-  - {provider: gemini, model: gemini-3.8-flash, proprietary: true}
+  - {provider: asu,    model: gpt-oss-120b}
+  - {provider: asu,    model: llama4-maverick-17b}
+  - {provider: asu,    model: gemma4-31b-it}
+  - {provider: azure,  model: gpt-5-mini, proprietary: true}
 
 # Extra request params per model (reasoning models: keep thinking short so JSON fits the budget).
 model_params:
   openai/gpt-oss-20b:  {reasoning_effort: low}
   openai/gpt-oss-120b: {reasoning_effort: low}
-  gemini-3.8-flash:    {reasoning_effort: low}     # same lowest-common setting as gpt-oss (gpt-oss can't turn reasoning off)
+  gpt-oss-120b:        {reasoning_effort: low}     # same model on ASU Voyager
+  # gpt-5-mini only accepts the default temperature (1) and max_completion_tokens, which also counts reasoning tokens
+  gpt-5-mini:          {reasoning_effort: low, temperature: null, max_tokens_field: max_completion_tokens, max_tokens_add: 4000}
 
-# List prices in USD per 1M tokens [input, output], used to compute $/1K docs (all runs here are free tier).
-# CHECK BEFORE REPORTING: Groq values are from its pricing page as last known; gemini-3.8-flash is NOT filled in
-# yet (look it up at ai.google.dev/pricing). Local Ollama = 0. A hosted model missing here logs cost_usd = null.
+# List prices in USD per 1M tokens [input, output], used to compute $/1K docs. Local Ollama = 0.
+# A hosted model missing here logs cost_usd = null. CHECK BEFORE REPORTING:
+# - ASU Voyager is free; its catalog shows one "indicative" $/1M value per model, used here for both input and output.
+# - gpt-5-mini: OpenAI list price as last known; confirm against the Azure pricing page.
 prices_per_1m:
   openai/gpt-oss-20b:  [0.075, 0.30]
   openai/gpt-oss-120b: [0.15, 0.60]
-  # gemini-3.8-flash:  [input, output]
+  gpt-oss-120b:        [0.21, 0.21]
+  llama4-maverick-17b: [1.00, 1.00]
+  gemma4-31b-it:       [0.44, 0.44]
+  gpt-5-mini:          [0.25, 2.00]
 
 llm:
   temperature: 0

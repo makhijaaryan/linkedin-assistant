@@ -113,12 +113,16 @@ class Router:
 
     def _call(self, task, provider, model, messages, doc_id, run, json_mode, max_tokens) -> Reply:
         temperature = self.cfg["llm"]["temperature"]
-        extra = self.cfg.get("model_params", {}).get(model, {})
+        extra = dict(self.cfg.get("model_params", {}).get(model, {}))
+        # reasoning models (gpt-5-mini): max_tokens is renamed and also has to cover the hidden reasoning tokens
+        tokens_field = extra.pop("max_tokens_field", "max_tokens")
+        tokens_add = extra.pop("max_tokens_add", 0)
         body = {"model": model, "messages": messages, "temperature": temperature, **extra}
+        body = {k: v for k, v in body.items() if v is not None}   # `temperature: null` = use the model default
         if json_mode:
             body["response_format"] = {"type": "json_object"}
         if max_tokens:
-            body["max_tokens"] = max_tokens
+            body[tokens_field] = max_tokens + tokens_add
         key = hashlib.sha256(json.dumps([provider, body, run], sort_keys=True).encode()).hexdigest()
         path = CACHE / f"{key}.json"
         if path.exists():

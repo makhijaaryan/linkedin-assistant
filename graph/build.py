@@ -1,6 +1,6 @@
 """R3: extractions -> normalized, evidence-grounded Neo4j graph (ontology v1.0).
 
-  python -m graph.build --extractions groq__openai__gpt-oss-20b ollama__llama3.1-8b --set graph
+  python -m graph.build --extractions asu__gpt-oss-120b ollama__llama3.1-8b --set graph
   python -m graph.build --check          # evidence audit only
   python -m graph.build --snapshot v1    # dump to data/processed/graph_snapshots/v1.jsonl.gz
 
