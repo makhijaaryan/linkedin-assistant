@@ -9,20 +9,52 @@ paths:
   results: eval/results
   router_log: router/logs/calls.jsonl
 
-providers:
+providers:            # rpm: client-side throttle under the free-tier limit; 429s are also retried with backoff
   ollama:     {base_url: http://localhost:11434/v1, api_key_env: null,               private_ok: true}
-  groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false}
-  gemini:     {base_url: https://generativelanguage.googleapis.com/v1beta/openai/, api_key_env: GEMINI_API_KEY, private_ok: false}
+  groq:       {base_url: https://api.groq.com/openai/v1, api_key_env: GROQ_API_KEY,  private_ok: false, rpm: 6}   # free tier: 1K req/day, 8K tokens/min per model
+  gemini:     {base_url: https://generativelanguage.googleapis.com/v1beta/openai/, api_key_env: GEMINI_API_KEY, private_ok: false, rpm: 8}
   openrouter: {base_url: https://openrouter.ai/api/v1,   api_key_env: OPENROUTER_API_KEY, private_ok: false, enabled: false}  # optional fallback
+
+# Only documents from these sources may go to hosted providers (D2: "anonymized Kaggle text").
+# Anything else (resume_corpus, uploaded CVs) is private -> local Ollama only.
+public_sources: [kaggle_linkedin_postings, kaggle_resume_dataset]
 
 # task -> provider/model. Real CVs (private data) may only use providers with private_ok: true.
 routes:
   extract_cv:       {provider: ollama,     model: llama3.1:8b}
-  extract_job:      {provider: groq,       model: openai/gpt-oss-20b}   # Groq no longer hosts Llama; also gpt-oss-120b, qwen/qwen3.8-27b
+  extract_job:      {provider: groq,       model: openai/gpt-oss-20b, fallback: {provider: ollama, model: llama3.1:8b}}   # Groq no longer hosts Llama
   normalize_tiebreak: {provider: ollama,   model: qwen2.5:7b}
+  infer_edges:      {provider: ollama,     model: qwen2.5:7b}
   explain:          {provider: ollama,     model: llama3.1:8b}
   critic:           {provider: ollama,     model: qwen2.5:7b}
-  proprietary_baseline: {provider: gemini, model: gemini-2.5-flash}   # anonymized Kaggle text only (free tier may train on prompts)
+  optimize_profile: {provider: ollama,     model: llama3.1:8b}
+  research:         {provider: ollama,     model: llama3.1:8b}
+  judge_relevance:  {provider: groq,       model: openai/gpt-oss-120b}  # only if D-relevance-judge is approved; public text only
+  chat:             {provider: ollama,     model: llama3.1:8b}
+  proprietary_baseline: {provider: gemini, model: gemini-3.8-flash}   # anonymized Kaggle text only (free tier may train on prompts); 2.5-flash now 404s (D20)
+
+# RQ1 extraction benchmark: every model runs the same prompt on the same 150 docs, 3 runs each.
+benchmark_models:
+  - {provider: ollama, model: llama3.1:8b}
+  - {provider: ollama, model: qwen2.5:7b}
+  - {provider: ollama, model: gemma2:9b}
+  - {provider: groq,   model: openai/gpt-oss-20b}
+  - {provider: groq,   model: openai/gpt-oss-120b}
+  - {provider: gemini, model: gemini-3.8-flash, proprietary: true}
+
+# Extra request params per model (reasoning models: keep thinking short so JSON fits the budget).
+model_params:
+  openai/gpt-oss-20b:  {reasoning_effort: low}
+  openai/gpt-oss-120b: {reasoning_effort: low}
+  gemini-3.8-flash:    {reasoning_effort: low}     # same lowest-common setting as gpt-oss (gpt-oss can't turn reasoning off)
+
+# List prices in USD per 1M tokens [input, output], used to compute $/1K docs (all runs here are free tier).
+# CHECK BEFORE REPORTING: Groq values are from its pricing page as last known; gemini-3.8-flash is NOT filled in
+# yet (look it up at ai.google.dev/pricing). Local Ollama = 0. A hosted model missing here logs cost_usd = null.
+prices_per_1m:
+  openai/gpt-oss-20b:  [0.075, 0.30]
+  openai/gpt-oss-120b: [0.15, 0.60]
+  # gemini-3.8-flash:  [input, output]
 
 llm:
   temperature: 0
