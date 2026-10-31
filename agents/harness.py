@@ -86,7 +86,7 @@ def kg_build_agent(state: MatchState) -> dict:
     b.add_doc({"parsed": state["parsed"]})
     b.finalize()
     b.g.write(driver())
-    return {"graph_stats": dict(b.stats)}
+    return {"graph_stats": {**b.stats, "edges": sum(len(rows) for rows in b.g.rels.values())}}
 
 
 def matching_agent(state: MatchState) -> dict:

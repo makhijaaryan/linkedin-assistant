@@ -1,0 +1,65 @@
+/* Card styling ported from Krish Naik's OpenMatch theme, rewritten on CSS variables that work in light and dark. */
+:root {
+  /* translucent fills + mid-tone text: readable on Streamlit's light and dark themes alike (the OS colour scheme
+     can differ from the app's theme, so no prefers-color-scheme switch) */
+  --om-muted: #8a94a3; --om-line: rgba(128, 128, 128, .28); --om-accent: #0a66c2;
+  --om-good-bg: rgba(46, 157, 85, .16); --om-good-fg: #2b9150;
+  --om-warn-bg: rgba(214, 137, 16, .18); --om-warn-fg: #b9770e;
+  --om-neutral-bg: rgba(128, 138, 152, .16); --om-neutral-fg: #6b7686;
+  --om-bad-bg: rgba(209, 69, 59, .15); --om-bad-fg: #cc3d33;
+  --om-info-bg: rgba(47, 111, 214, .15); --om-info-fg: #2f6fd6;
+}
+
+div[data-testid="stMetric"] { background: var(--secondary-background-color); border-radius: 10px; padding: 10px 14px; }
+div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 12px; }
+
+.om-badge { padding: 2px 9px; margin: 2px 4px 2px 0; border-radius: 12px; display: inline-block; white-space: nowrap; }
+.om-good { background: var(--om-good-bg); color: var(--om-good-fg); }
+.om-warn { background: var(--om-warn-bg); color: var(--om-warn-fg); }
+.om-neutral { background: var(--om-neutral-bg); color: var(--om-neutral-fg); }
+.om-bad { background: var(--om-bad-bg); color: var(--om-bad-fg); }
+.om-info { background: var(--om-info-bg); color: var(--om-info-fg); }
+.om-muted { color: var(--om-muted); }
+.om-empty { padding: 1.2rem; border: 1px dashed var(--om-line); border-radius: 10px; color: var(--om-muted); text-align: center; }
+
+/* ---- bento tiles (st.container(key="bento-…")) ---- */
+div[class*="st-key-bento-"] { border-radius: 18px; }
+div[class*="st-key-bento-"] h3 { font-size: 1.15rem; padding-top: 0; }
+div.st-key-bento-hero { background: var(--om-accent); border-color: var(--om-accent); }
+.om-hero { color: #ffffff; padding: .4rem .2rem; }
+.om-hero-label { font-size: .95rem; opacity: .9; }
+.om-hero-value { font-size: 4.2rem; font-weight: 700; line-height: 1.15; margin: .8rem 0 .5rem; }
+.om-hero-note { font-size: .86rem; opacity: .92; line-height: 1.45; }
+.om-stat-label { font-size: .82rem; color: var(--om-muted); }
+.om-stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1.25; }
+.om-stat-note { font-size: .78rem; color: var(--om-muted); }
+.om-row { display: flex; align-items: center; gap: .7rem; padding: .42rem 0; border-bottom: 1px solid var(--om-line); font-size: .9rem; }
+.om-row:last-child { border-bottom: 0; }
+.om-row-main { flex: 1; min-width: 0; line-height: 1.35; }
+.om-row small { color: var(--om-muted); }
+.om-rank { width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--om-info-bg); color: var(--om-info-fg);
+           font-weight: 700; font-size: .82rem; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+
+/* ---- job cards ---- */
+.om-job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.om-job-title { font-size: 1.12rem; font-weight: 700; }
+.om-job-meta { color: var(--om-muted); font-size: .86rem; margin: .1rem 0 .45rem; }
+.om-job-skills { margin-top: .15rem; line-height: 1.9; display: flex; align-items: baseline; }
+.om-job-label { flex: none; width: 4.6rem; color: var(--om-muted); font-size: .8rem; }
+.om-job-none { color: var(--om-muted); font-size: .82rem; }
+div.st-key-filter-chips button { border-radius: 999px; padding: 0 .75rem; min-height: 1.9rem; font-size: .82rem; }
+
+/* ---- cited explanation sentences ---- */
+.om-sent { padding: .35rem .6rem; border-left: 3px solid var(--om-good-fg); margin: .3rem 0; background: var(--secondary-background-color); border-radius: 0 8px 8px 0; }
+.om-sent.rej { border-left-color: var(--om-bad-fg); text-decoration: line-through; opacity: .75; }
+.om-cite { font-family: ui-monospace, monospace; font-size: .72rem; color: var(--om-info-fg); background: var(--om-info-bg);
+           padding: 0 5px; border-radius: 6px; margin-left: 3px; }
+
+/* ---- pipeline funnel ---- */
+.om-funnel { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; font-size: .84rem; }
+.om-step { background: var(--om-neutral-bg); color: var(--om-neutral-fg); border-radius: 8px; padding: 3px 9px; }
+.om-arrow { color: var(--om-muted); }
+
+table.om-table { width: 100%; border-collapse: collapse; font-size: .9rem; margin-bottom: 1rem; }
+table.om-table th { text-align: left; font-weight: 600; color: var(--om-muted); font-size: .8rem; padding: .4rem .7rem; border-bottom: 1px solid var(--om-line); }
+table.om-table td { padding: .55rem .7rem; border-bottom: 1px solid var(--om-line); vertical-align: top; }

@@ -153,7 +153,7 @@ def llm_explanation(router, candidate_id: str, job_id: str, facts: list[Fact], *
         ex.rounds = rnd + 1
         prompt = EXPLAIN_PROMPT.format(facts=_numbered(facts)) + feedback
         try:
-            out = json.loads(router.chat("explain", [{"role": "user", "content": prompt}], run=rnd, **kw).text)
+            out = json.loads(router.chat("explain", [{"role": "user", "content": prompt}], run=rnd, max_tokens=700, **kw).text)
             draft = out.get("sentences", []) if isinstance(out, dict) else []
         except (json.JSONDecodeError, AttributeError):
             draft = []
@@ -193,7 +193,7 @@ def critic(router, sentences: list[dict], facts: list[Fact], *, private: bool) -
         cited = "\n".join(f"[{i}] {facts[i].text}" for i in s["fact_idx"])
         try:
             v = json.loads(router.chat("critic", [{"role": "user", "content": CRITIC_PROMPT.format(
-                sentence=s["text"], facts=cited)}], private=private).text)
+                sentence=s["text"], facts=cited)}], private=private, max_tokens=200).text)
             ok = bool(v.get("supported"))
             out.append({"verdict": "supported" if ok else "rejected", "reason": v.get("reason", "")})
         except Exception as e:

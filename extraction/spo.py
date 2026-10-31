@@ -6,6 +6,7 @@ Output: data/processed/extractions/spo__<extractor>/run0.jsonl, one {"doc_id", "
 
 import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from extraction.chunk import chunk_text
@@ -35,6 +36,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--set", default="graph")
     ap.add_argument("--extractor", default="asu/gpt-oss-120b")
+    ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args()
     router = Router()
     provider, model = a.extractor.split("/", 1)
@@ -42,17 +44,17 @@ def main():
     path = OUT / f"spo__{slug(a.extractor)}" / "run0.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     done = {json.loads(x)["doc_id"] for x in open(path)} if path.exists() else set()
-    with open(path, "a") as f:
-        for row in load_docs(a.set).itertuples():
-            private = row.source not in public
-            if row.doc_id in done or (private and not router.cfg["providers"][provider]["private_ok"]):
-                continue
+    todo = [row for row in load_docs(a.set).itertuples() if row.doc_id not in done and
+            (row.source in public or router.cfg["providers"][provider]["private_ok"])]
+    with open(path, "a") as f, ThreadPoolExecutor(a.workers) as pool:
+        futures = {pool.submit(extract, router, row.doc_id, row.text, private=row.source not in public,
+                               provider=provider, model=model): row.doc_id for row in todo}
+        for fut in as_completed(futures):
             try:
-                f.write(json.dumps(extract(router, row.doc_id, row.text, private=private, provider=provider,
-                                           model=model)) + "\n")
+                f.write(json.dumps(fut.result()) + "\n")
                 f.flush()
             except Exception as e:
-                print("  FAIL", row.doc_id, type(e).__name__, str(e)[:150])
+                print("  FAIL", futures[fut], type(e).__name__, str(e)[:150])
     print("wrote", path)
 
 

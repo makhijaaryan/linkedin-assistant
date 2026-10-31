@@ -1,0 +1,81 @@
+{
+ "labels": "llm",
+ "normalization_classical": {
+  "p_hat": 0.746,
+  "ci_low": 0.7060690794081029,
+  "ci_high": 0.7821797450848135,
+  "n": 500
+ },
+ "normalization_modern": {
+  "p_hat": 0.77,
+  "ci_low": 0.7311377813252322,
+  "ci_high": 0.8047450748255296,
+  "n": 500
+ },
+ "modern_vs_classical_mcnemar": {
+  "a_only": 32,
+  "b_only": 20,
+  "p": 0.1271529926000141,
+  "odds_ratio": 1.5853658536585367
+ },
+ "edge_precision": {
+  "p_hat": 0.84,
+  "ci_low": 0.7557973061072976,
+  "ci_high": 0.8990471151119521,
+  "n": 100
+ },
+ "edge_precision_by_type": {
+  "FOR_ROLE": {
+   "p_hat": 0.5,
+   "ci_low": 0.15003898915214947,
+   "ci_high": 0.8499610108478506,
+   "n": 4
+  },
+  "HAS_REQUIREMENT": {
+   "p_hat": 1.0,
+   "ci_low": 0.8830302015002592,
+   "ci_high": 1.0,
+   "n": 29
+  },
+  "HAS_SKILL": {
+   "p_hat": 1.0,
+   "ci_low": 0.2065493143772374,
+   "ci_high": 1.0,
+   "n": 1
+  },
+  "HELD": {
+   "p_hat": 1.0,
+   "ci_low": 0.342380227506653,
+   "ci_high": 1.0,
+   "n": 2
+  },
+  "LOCATED_IN": {
+   "p_hat": 0.5,
+   "ci_low": 0.09453120573423068,
+   "ci_high": 0.9054687942657693,
+   "n": 2
+  },
+  "POSTED_BY": {
+   "p_hat": 1.0,
+   "ci_low": 0.2065493143772374,
+   "ci_high": 1.0,
+   "n": 1
+  },
+  "TARGETS": {
+   "p_hat": 0.8421052631578947,
+   "ci_low": 0.7263682305936197,
+   "ci_high": 0.9146420402964472,
+   "n": 57
+  },
+  "USED": {
+   "p_hat": 0.0,
+   "ci_low": 0.0,
+   "ci_high": 0.4898908364545974,
+   "n": 4
+  }
+ },
+ "targets": {
+  "normalization_top1": 0.9,
+  "edge_precision": 0.9
+ }
+}

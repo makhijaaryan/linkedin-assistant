@@ -13,9 +13,19 @@ import pandas as pd
 R = Path("eval/results")
 
 
+CLAUDE = " (Claude-judged, D30)"
+
+
 def load(name):
-    p = R / name
-    return json.loads(p.read_text()) if p.exists() else None
+    """A result file; label-dependent results fall back to the Claude-labeled version, marked with `_claude`."""
+    stem = name.removesuffix(".json")
+    for cand, claude in ((name, False), (f"{stem}_llm.json", True), (f"{stem}_llm_label.json", True)):
+        p = R / cand
+        if p.exists():
+            out = json.loads(p.read_text())
+            out["_claude"] = claude
+            return out
+    return None
 
 
 def fmt_ci(d, scale=1.0, digits=3):
@@ -42,10 +52,13 @@ def main():
     rows = []
     add = lambda thread, metric, target, value: rows.append(f"| {thread} | {metric} | {target} | {value} |")
     hc = Path("data/processed/annotation/dedupe_handcheck_jobs.csv")
-    if hc.exists() and pd.read_csv(hc)["is_duplicate"].notna().any():
+    h = pd.read_csv(hc, dtype=str).fillna("") if hc.exists() else pd.DataFrame()
+    col = next((c for c in ("is_duplicate", "llm_is_duplicate") if c in h and (h[c] != "").sum() >= 0.9 * len(h)), None)
+    if col:
         from eval import stats
-        h = pd.read_csv(hc).dropna(subset=["is_duplicate"])
-        add("R1", "Dedupe precision", "≥ 0.95", fmt_ci(stats.wilson(int(h["is_duplicate"].sum()), len(h))))
+        h = h[h[col] != ""]
+        add("R1", "Dedupe precision (200 job pairs)" + (CLAUDE if col.startswith("llm") else ""), "≥ 0.95",
+            fmt_ci(stats.wilson(int(h[col].astype(int).sum()), len(h))))
     else:
         add("R1", "Dedupe precision", "≥ 0.95", "PENDING: fill is_duplicate in dedupe_handcheck_jobs.csv")
     if p1:
@@ -64,13 +77,14 @@ def main():
     else:
         add("R2 / RQ1", "Per-type F1 on 150 docs", "≥ 0.80; +10 over CRF",
             "PENDING: gold labels (Label Studio export -> data/processed/annotation/gold_extraction.json)")
+    gtag = CLAUDE if graph and graph.get("_claude") else ""
     if graph and "normalization_modern" in graph:
-        add("R3", "Top-1 normalization (modern)", "≥ 0.90", fmt_ci(graph["normalization_modern"]))
-        add("R3", "Top-1 normalization (classical)", "≥ 0.90", fmt_ci(graph["normalization_classical"]))
+        add("R3", "Top-1 normalization (modern)" + gtag, "≥ 0.90", fmt_ci(graph["normalization_modern"]))
+        add("R3", "Top-1 normalization (classical)" + gtag, "≥ 0.90", fmt_ci(graph["normalization_classical"]))
     else:
         add("R3", "Top-1 normalization (500)", "≥ 0.90", "PENDING: fill gold_taxonomy_id in skill_mentions_500.csv")
     if graph and "edge_precision" in graph:
-        add("R3", "Edge precision (100)", "≥ 0.90", fmt_ci(graph["edge_precision"]))
+        add("R3", "Edge precision (100)" + gtag, "≥ 0.90", fmt_ci(graph["edge_precision"]))
     else:
         add("R3", "Edge precision (100)", "≥ 0.90", "PENDING: fill is_correct in edge_sample_100.csv")
     if spo:
@@ -80,7 +94,8 @@ def main():
         add("R3 / RQ3", "Ontology vs SPO", "report", "PENDING: run extraction.spo, then eval.spo_eval")
     if rank:
         c = rank["cascade_vs_bm25"]
-        add("R4 / RQ4", "nDCG@10 cascade vs BM25", "+15%",
+        add("R4 / RQ4", f"nDCG@10 cascade vs BM25 ({rank['n_profiles']} profiles)" + (CLAUDE if rank.get("_claude") else ""),
+            "+15%",
             f"{rank['means']['cascade_mmr']['ndcg@10']:.3f} vs {rank['means']['bm25']['ndcg@10']:.3f} "
             f"({100 * (c['relative_gain'] or 0):+.1f}%, p = {c['p']:.4f})")
         for k, v in rank["ablations_vs_full"].items():
@@ -89,8 +104,15 @@ def main():
     else:
         add("R4 / RQ4", "nDCG@10, MRR, P@5 on 40 profiles", "+15% nDCG over BM25",
             "PENDING: 800 relevance labels (streamlit run ui/judge.py)")
-    add("R5 / RQ2", "LoRA F1 vs teacher", "within 3 pts", "PENDING: teacher labels + Colab run "
-                                                         "(notebooks/qlora_extraction.ipynb), then the benchmark")
+    student = next((k for k in (ext or {}).get("results", {}) if k.startswith("mlx__")), None)
+    teacher = "asu__gpt-oss-120b"
+    if student and teacher in ext["results"]:
+        s_f1, t_f1 = (100 * ext["results"][k]["micro_f1_mean_sd"][0] for k in (student, teacher))
+        add("R5 / RQ2", f"LoRA student F1 vs teacher ({student})", "within 3 pts",
+            f"{s_f1:.1f} vs {t_f1:.1f} ({s_f1 - t_f1:+.1f})")
+    else:
+        add("R5 / RQ2", "LoRA F1 vs teacher", "within 3 pts", "PENDING: teacher labels, then scripts/qlora_mlx.sh "
+                                                             "(D34) and the student's benchmark run")
     if expl and "faithfulness" in expl:
         for m, v in expl["faithfulness"].items():
             add("R6 / RQ4", f"Faithfulness ({m})", "≥ 0.95", fmt_ci(v))

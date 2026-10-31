@@ -140,7 +140,8 @@ class Router:
     def _send(self, provider: str, body: dict) -> Reply:
         self._throttle(provider)
         t0 = time.perf_counter()
-        r = self.client(provider).chat.completions.create(**body)
+        send_as = self.cfg["providers"][provider].get("send_model")   # a server that serves one model under a fixed name
+        r = self.client(provider).chat.completions.create(**({**body, "model": send_as} if send_as else body))
         latency = time.perf_counter() - t0
         u = r.usage
         pt, ct = (u.prompt_tokens, u.completion_tokens) if u else (0, 0)

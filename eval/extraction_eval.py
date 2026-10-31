@@ -21,6 +21,7 @@ import yaml
 from eval import stats
 
 GOLD = Path("data/processed/annotation/gold_extraction.json")
+LOCAL60 = Path("data/processed/test_local60.txt").read_text().split() if Path("data/processed/test_local60.txt").exists() else []
 EXTRACTIONS = Path("data/processed/extractions")
 RESULTS = Path("eval/results")
 LABELS = ["Skill", "Requirement", "Experience", "Credential", "Project", "Company", "Occupation", "Location"]
@@ -64,7 +65,8 @@ def load_gold(path: Path = GOLD) -> dict:
             v = r["value"]
             ents[v["labels"][0]][norm(v["text"])].append((v["start"], v["end"]))
         d = task["data"]
-        gold[d["doc_id"]] = {"text": d["text"], "doc_type": d["doc_type"], "entities": ents}
+        gold[d["doc_id"]] = {"text": d["text"], "doc_type": d["doc_type"], "entities": ents,
+                             "upto": d.get("annotated_upto", len(d["text"]))}
     return gold
 
 
@@ -127,6 +129,18 @@ def pred_entities(parsed: dict, text: str) -> dict:
     return ents
 
 
+def clip(ents: dict, upto: int | None) -> dict:
+    """Drop predicted entities found only past the annotated part of a long posting (gold stops at `upto`)."""
+    if not upto:
+        return ents
+    out = defaultdict(lambda: defaultdict(list))
+    for lab, items in ents.items():
+        for name, spans in items.items():
+            if not spans or any(s[0] < upto for s in spans):
+                out[lab][name] = [s for s in spans if s[0] < upto]
+    return out
+
+
 def _overlap(a, b) -> bool:
     inter = min(a[1], b[1]) - max(a[0], b[0])
     return inter > 0 and inter >= 0.5 * min(a[1] - a[0], b[1] - b[0])
@@ -175,7 +189,8 @@ def evaluate_extractor(gold: dict, runs: list[dict]) -> dict:
     for run in runs:
         tot = defaultdict(lambda: [0, 0, 0])
         for d in docs:
-            sc = score_doc(gold[d]["entities"], pred_entities(run[d]["parsed"], gold[d]["text"]))
+            sc = score_doc(gold[d]["entities"], clip(pred_entities(run[d]["parsed"], gold[d]["text"]),
+                                                       gold[d].get("upto")))
             t = [sum(sc[lab][k] for lab in LABELS) for k in ("tp", "fp", "fn")]
             doc_f1[d].append(100 * prf(*t)[2])
             for lab in LABELS:
@@ -245,14 +260,16 @@ def markdown(results: dict, comparisons: dict, dry_run: bool) -> str:
     lines = ["# Extraction benchmark (R2 / RQ1)", ""]
     if dry_run:
         lines += ["**DRY RUN: the 'gold' here is another model's output. Pipeline check only, not a result.**", ""]
-    lines += ["| Extractor | Docs | Runs | Micro-F1 | " + " | ".join(LABELS) + " | p50 s/doc | $/1K docs |",
-              "|---" * (6 + len(LABELS)) + "|"]
+    lines += ["| Extractor | Docs | Runs | Micro-F1 | Micro-F1, shared 60 docs | " + " | ".join(LABELS) +
+              " | p50 s/doc | $/1K docs |", "|---" * (7 + len(LABELS)) + "|"]
     for name, r in results.items():
         f1 = " | ".join(f"{100 * r['per_type_mean_sd'][lab]['f1'][0]:.1f}" for lab in LABELS)
         eff = r.get("efficiency", {})
         cost = eff.get("usd_per_1k_docs")
+        l60 = r.get("local60")
+        l60 = f"{100 * l60['micro_f1_mean_sd'][0]:.1f} (n={l60['n_docs']})" if l60 else "–"
         lines.append(f"| {name} | {r['n_docs']} | {r['runs']} | {100 * r['micro_f1_mean_sd'][0]:.1f} ± "
-                     f"{100 * r['micro_f1_mean_sd'][1]:.1f} | {f1} | {eff.get('p50_s', {}).get('estimate', 0):.1f} | "
+                     f"{100 * r['micro_f1_mean_sd'][1]:.1f} | {l60} | {f1} | {eff.get('p50_s', {}).get('estimate', 0):.1f} | "
                      f"{'n/a' if cost is None else f'{cost:.3f}'} |")
     lines += ["", "| Open model | ΔF1 vs proprietary [95% CI] | p (Holm) | Non-inferior (δ=3) | ΔF1 vs CRF [95% CI] | +10 met |",
               "|---|---|---|---|---|---|"]
@@ -295,6 +312,10 @@ def main():
         if not runs or not set(gold) & set.intersection(*(set(r) for r in runs)):
             continue
         res = evaluate_extractor(gold, runs)
+        local = {k: gold[k] for k in LOCAL60 if k in gold}
+        if local and set(local) & set.intersection(*(set(r) for r in runs)):   # the shared subset every tier ran (D36)
+            sub = evaluate_extractor(local, runs)
+            res["local60"] = {"n_docs": sub["n_docs"], "micro_f1_mean_sd": sub["micro_f1_mean_sd"]}
         model = d.name.split("__", 1)[-1].replace("__", "/")
         res["efficiency"] = efficiency(runs, res["docs"], cfg.get("prices_per_1m") or {}, model,
                                        d.name in local or d.name == "crf")

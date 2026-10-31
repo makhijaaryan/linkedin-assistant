@@ -380,6 +380,7 @@ def main():
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--no-llm", action="store_true", help="RELATED_TO from embeddings only")
     ap.add_argument("--snapshot", default="")
+    ap.add_argument("--only", default="", help="file of doc_ids: load only these docs from the extraction dirs")
     a = ap.parse_args()
     cfg = yaml.safe_load(open("config.yaml"))
     drv = driver()
@@ -389,6 +390,9 @@ def main():
     if a.extractions:
         from extraction.run import load_docs
         rows = load_extractions(a.extractions)
+        if a.only:
+            keep = set(Path(a.only).read_text().split())
+            rows = [r for r in rows if r["parsed"]["doc_id"] in keep]
         ids = [r["parsed"]["doc_id"] for r in rows]
         Path("data/interim").mkdir(parents=True, exist_ok=True)
         Path("data/interim/graph_ids.txt").write_text("\n".join(ids))

@@ -134,6 +134,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--labels", default="label")
     ap.add_argument("--no-graph", action="store_true")
+    ap.add_argument("--save-models", action="store_true", help="also train the live models on these labels (D30)")
     a = ap.parse_args()
     pool = pd.read_csv(POOL, dtype={"label": str, "llm_label": str})
     pool["label"] = pd.to_numeric(pool[a.labels], errors="coerce")
@@ -149,9 +150,12 @@ def main():
     tag = "" if a.labels == "label" else f"_{a.labels}"
     (RESULTS / f"ranking_eval{tag}.json").write_text(json.dumps(res, indent=1, default=float))
     (RESULTS / f"ranking_eval{tag}.md").write_text(markdown(res))
-    df.drop(columns=["_emb_row"]).to_parquet(Path("data/processed/ranking_features.parquet"))
-    if a.labels == "label":   # the live cascade uses models trained on all human-judged profiles
+    feats = df.drop(columns=["_emb_row"])
+    feats.attrs = {}                          # attrs hold the embedding matrix, which parquet metadata can't store
+    feats.to_parquet(Path("data/processed/ranking_features.parquet"))
+    if a.labels == "label" or a.save_models:  # the live cascade uses LambdaMART trained on all judged profiles
         save_models(fit(df, FEATURE_SETS["ltr_full"]), fit(df, ALL_FEATURES))
+        print(f"saved live LambdaMART models (labels: {a.labels})")
     print(markdown(res))
 
 

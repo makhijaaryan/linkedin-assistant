@@ -21,18 +21,27 @@ hosted_queue() {
   wait
 }
 
+# Ollama: only the private ranking-profile CVs (resume_corpus, D24) + the local benchmark models, 2 requests at a
+# time (needs OLLAMA_NUM_PARALLEL=2: `launchctl setenv OLLAMA_NUM_PARALLEL 2; brew services restart ollama`).
 ollama_queue() {
-  $PY -u -m extraction.run --set profiles --extractor ollama/llama3.1:8b
+  $PY -u -m extraction.run --set ids:data/processed/profiles_private.txt --extractor ollama/llama3.1:8b --workers 2
   for m in ollama/llama3.1:8b ollama/qwen2.5:7b ollama/gemma2:9b; do
-    $PY -u -m extraction.run --set test --extractor "$m" --runs 1
+    $PY -u -m extraction.run --set test --extractor "$m" --runs 1 --workers 2
   done
+}
+
+# The 25 public (Kaggle) ranking-profile CVs go to the hosted route model (D2 allows public text; 2026-10-30)
+profiles_public() {
+  $PY -u -m extraction.run --set ids:data/processed/profiles_public.txt --extractor asu/gpt-oss-120b --workers 4
 }
 
 case "${1:-both}" in
   hosted) hosted_queue >> .cache/logs/queue_hosted.log 2>&1 ;;
+  profiles_public) profiles_public >> .cache/logs/queue_hosted.log 2>&1 ;;
   ollama) ollama_queue >> .cache/logs/queue_ollama.log 2>&1 ;;
   both)
     hosted_queue >> .cache/logs/queue_hosted.log 2>&1 &
+    profiles_public >> .cache/logs/queue_hosted.log 2>&1 &
     ollama_queue >> .cache/logs/queue_ollama.log 2>&1 &
     wait ;;
 esac

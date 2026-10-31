@@ -1,0 +1,29 @@
+# MLX LoRA on a 4-bit base = the Apple-silicon equivalent of the notebook's QLoRA (D26, D34).
+model: mlx-community/Qwen2.5-7B-Instruct-4bit
+train: true
+data: .cache/qlora/data
+adapter_path: .cache/qlora/adapters
+fine_tune_type: lora
+num_layers: -1              # all 28 layers, like target_modules=all projections in the notebook
+batch_size: 1
+grad_accumulation_steps: 16 # effective batch 16, as in the notebook
+learning_rate: 2.0e-4
+lr_schedule:
+  name: cosine_decay
+  warmup: 10
+  arguments: [2.0e-4, 300, 1.0e-6]
+iters: 300                  # set by scripts/qlora_mlx.sh to one epoch of micro-batches (batch 1)
+max_seq_length: 2048
+mask_prompt: true           # assistant-only loss
+grad_checkpoint: true
+steps_per_report: 10
+steps_per_eval: 100
+val_batches: 25
+save_every: 100
+seed: 573
+lora_parameters:
+  keys: ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj",
+         "mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"]
+  rank: 16
+  scale: 2.0                # lora_alpha 32 / r 16
+  dropout: 0.05

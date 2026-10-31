@@ -1,5 +1,7 @@
 """Offline tests for Phases 2-9 (no network, no Neo4j, no LLM calls)."""
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -108,3 +110,10 @@ def test_distill_splits_items_by_chunk():
     targets = [json.loads(e["messages"][-1]["content"]) for e in ex]
     assert sum(len(t["requirements"]) for t in targets) == 1 and targets[-1]["requirements"]
     assert "char_start" not in json.dumps(targets)
+
+
+def test_ui_pages_compile():
+    """Streamlit AppTest does not surface a page's SyntaxError, so compile every UI file explicitly."""
+    import py_compile
+    for f in sorted(Path("ui").rglob("*.py")):
+        py_compile.compile(str(f), doraise=True)

@@ -27,16 +27,21 @@ SEED = 573
 
 
 def pairs(n: int = 60) -> list[tuple[str, str]]:
-    """Per profile: the best-judged pooled job, then a second pair for 20 random profiles."""
+    """Public profiles only (their CVs are in the graph; D32/D36): each profile's two best-judged pooled jobs, then a
+    third for random profiles until n. Judgments: the human `label`, else Claude's `llm_label` (D30)."""
     pool = pd.read_csv(POOL, dtype=str).fillna("")
-    pool["l"] = pd.to_numeric(pool["label"], errors="coerce").fillna(-1)
-    out = []
-    for pid, g in pool.groupby("profile_id"):
-        out.append((pid, g.sort_values("l", ascending=False).iloc[0]["job_id"]))
+    src = pd.read_parquet("data/processed/resumes.parquet", columns=["doc_id", "source"]).set_index("doc_id")["source"]
+    pool = pool[pool["profile_id"].map(src) == "kaggle_resume_dataset"]
+    lab = pool["label"].where(pool["label"] != "", pool.get("llm_label", ""))
+    pool = pool.assign(l=pd.to_numeric(lab, errors="coerce").fillna(-1))
+    ranked = {pid: g.sort_values(["l", "job_id"], ascending=[False, True])["job_id"].tolist()
+              for pid, g in pool.groupby("profile_id")}
+    out = [(pid, jobs[k]) for k in (0, 1) for pid, jobs in sorted(ranked.items()) if len(jobs) > k]
     rng = np.random.default_rng(SEED)
-    for pid in rng.permutation(sorted(pool["profile_id"].unique()))[: n - len(out)]:
-        g = pool[pool["profile_id"] == pid].sort_values("l", ascending=False)
-        out.append((pid, g.iloc[1]["job_id"]))
+    for pid in rng.permutation(sorted(ranked)):
+        if len(out) >= n:
+            break
+        out.append((pid, ranked[pid][2]))
     return out[:n]
 
 
