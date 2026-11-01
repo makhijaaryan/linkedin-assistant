@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import ranking.live  # noqa: E402,F401  loads the LambdaMART models before torch is imported (macOS OpenMP clash)
 import streamlit as st  # noqa: E402
 
 from ui.components import badge_html, load_theme, profile  # noqa: E402
@@ -35,7 +36,6 @@ pages = {
     "Research": [
         st.Page(HERE / "views/models.py", title="Models & router", icon="⚙️"),
         st.Page(HERE / "views/research.py", title="Results", icon="📊"),
-        st.Page(HERE / "views/annotate.py", title="Annotation", icon="✍️"),
     ],
 }
 nav = st.navigation(pages)

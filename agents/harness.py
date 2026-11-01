@@ -58,6 +58,14 @@ def jobs_corpus() -> Corpus:
     return Corpus("jobs")
 
 
+def corpus_for(job_id: str) -> Corpus:
+    """The corpus holding a posting: live Adzuna postings (adz_*) or the Kaggle index."""
+    if job_id.startswith("adz_"):
+        from ranking import live_jobs
+        return live_jobs.corpus()
+    return jobs_corpus()
+
+
 @lru_cache(maxsize=1)
 def normalizers():
     return Normalizer("modern", get_router()), OccupationNormalizer()
@@ -101,15 +109,15 @@ def ensure_jobs_in_graph(job_ids: list[str]) -> list[str]:
     missing = [j for j in job_ids if j not in have]
     if not missing:
         return []
-    c = jobs_corpus()
-    rows = []
+    rows, docs = [], []
     for j in missing:
+        c = corpus_for(j)
         m = c.meta.iloc[c.pos[j]]
         parsed, stats = llm.extract_document(get_router(), j, "JobPosting", c.text[c.pos[j]], private=False,
                                              title=m["title"], company=m["company"])
         rows.append({"parsed": parsed.model_dump(mode="json"), "stats": stats})
-    docs = pd.DataFrame([{"doc_id": j, "source": c.meta.iloc[c.pos[j]]["source"], "text": c.text[c.pos[j]],
-                          "doc_type": "JobPosting"} for j in missing])
+        docs.append({"doc_id": j, "source": m["source"], "text": c.text[c.pos[j]], "doc_type": "JobPosting"})
+    docs = pd.DataFrame(docs)
     norm, occ = normalizers()
     b = Builder(docs, norm, occ)
     for r in rows:
@@ -141,13 +149,13 @@ def optimizer_agent(state: MatchState) -> dict:
 
 
 def research_agent(state: OutreachState) -> dict:
-    c = jobs_corpus()
+    c = corpus_for(state["job_id"])
     i = c.pos[state["job_id"]]
     return {"brief": outreach.company_brief(get_router(), state["job_id"], c.meta, c.text[i], public=False)}
 
 
 def outreach_agent(state: OutreachState) -> dict:
-    c = jobs_corpus()
+    c = corpus_for(state["job_id"])
     m = c.meta.iloc[c.pos[state["job_id"]]]
     facts = explainer.bundle(state["cv_id"], state["job_id"])
     return {"draft": outreach.outreach_draft(get_router(), m["title"], m["company"], facts,
@@ -157,7 +165,7 @@ def outreach_agent(state: OutreachState) -> dict:
 def scheduler_agent(state: OutreachState) -> dict:
     if not state.get("approved"):
         return {"ics": ""}
-    c = jobs_corpus()
+    c = corpus_for(state["job_id"])
     m = c.meta.iloc[c.pos[state["job_id"]]]
     return {"ics": outreach.follow_up_ics(m["title"], m["company"])}
 

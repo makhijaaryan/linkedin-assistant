@@ -19,9 +19,24 @@ from ranking.ltr import ALL_FEATURES, pair_features
 MODELS = Path(".cache/models")
 
 
+_LOADED: dict = {}
+
+
 def _load(name):
-    p = MODELS / name
-    return pickle.load(open(p, "rb")) if p.exists() else None
+    """LambdaMART models are unpickled once, at import (see preload): unpickling LightGBM after torch has run an
+    encode segfaults on macOS (two OpenMP runtimes), and the UI imports this module before any encode."""
+    if name not in _LOADED:
+        p = MODELS / name
+        model = pickle.load(open(p, "rb")) if p.exists() else None
+        if model is not None:
+            model.set_params(n_jobs=1)
+        _LOADED[name] = model
+    return _LOADED[name]
+
+
+def preload():
+    for name in ("ltr_no_ce.pkl", "ltr_full.pkl"):
+        _load(name)
 
 
 def save_models(full, no_ce):
@@ -72,3 +87,6 @@ def rank(q: Query, corpus: Corpus, graph=None, k: int = 10, depth: int = 200, re
                 row[c] = m[c]
         results.append(row)
     return {"results": results, "stages": stages, "timing": {k_: round(v, 3) for k_, v in timing.items()}}
+
+
+preload()

@@ -130,7 +130,13 @@ def explanations_block() -> str:
                            "hallucination rate": v["hallucination_rate"],
                            "fully faithful explanations": v["explanation_level_all_supported"]}
                        for m, v in e["faithfulness"].items()}).T
-    return df.to_markdown(floatfmt=".3f")
+    note = ("Sentences shown after the critic, judged against the graph facts they cite"
+            + (" (Claude-judged, D30/D39)." if e.get("labels") == "claude" else "."))
+    mc = e.get("mcnemar_vs_proprietary") or {}
+    if mc:
+        note += " Fully faithful explanations vs. the proprietary explainer (McNemar, Holm): " + "; ".join(
+            f"{m} p_holm = {v['p_holm']:.3f}" for m, v in mc.items()) + "."
+    return note + "\n\n" + df.to_markdown(floatfmt=".3f")
 
 
 def kappa(a, b):
@@ -165,7 +171,9 @@ def agreement_block() -> str:
         rows.append({"set": "Gold extraction (entities kept)", "items checked": f"{len(c)} docs",
                      "agreement": f"{kept / tot:.0%}" if tot else "—", "Cohen's κ": "—"})
     if not rows:
-        return pending("the owner's spot-checks on the Annotation page")
+        return ("**No independent human check.** All test labels in this report (relevance, gold extraction, dedupe, "
+                "normalization, edges and explanation faithfulness) were produced by Claude (D30); no human "
+                "spot-check of them was done.")
     return "**Human spot-check agreement with Claude's labels:**\n\n" + pd.DataFrame(rows).to_markdown(index=False)
 
 

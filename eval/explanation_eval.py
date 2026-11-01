@@ -91,7 +91,10 @@ def score() -> dict:
                                     "all_shown_cited": all(s["cites"] for s in sents),
                                     "empty_explanations": int(sum(len(ss) == 0 for ss in g["sentences"]))}
     df = pd.read_csv(SHEET, dtype=str).fillna("")
-    df = df[df["supported"].isin(["0", "1"])]
+    # the human `supported` label, else Claude's `llm_supported` (D30)
+    lab = df["supported"].where(df["supported"].isin(["0", "1"]), df.get("llm_supported", ""))
+    out["labels"] = "human" if df["supported"].isin(["0", "1"]).all() else "claude"
+    df = df.assign(supported=lab)[lab.isin(["0", "1"])]
     if len(df):
         df["ok"] = df["supported"].astype(int)
         out["faithfulness"] = {m: {**stats.wilson(int(g["ok"].sum()), len(g)),

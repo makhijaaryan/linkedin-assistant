@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,7 @@ import streamlit as st
 from agents import explainer, harness, optimizer, outreach
 from graph.build import driver
 from graph.normalize import clean, taxonomy
+from ingest import adzuna
 from ingest.text import clean_text, mask_contacts
 from ranking import live
 from ranking.cascade import Corpus, Query, job_query, minmax, new_cv_query
@@ -47,6 +49,11 @@ def cvs() -> Corpus:
 def skill_names() -> dict:
     t = taxonomy()
     return dict(zip(t["taxonomy_id"], t["canonical_name"]))
+
+
+def corpus_for(job_id: str) -> Corpus:
+    """Live Adzuna postings (adz_*) or the Kaggle index."""
+    return harness.corpus_for(job_id) if job_id.startswith("adz_") else jobs()
 
 
 def skill_label(sid: str) -> str:
@@ -109,7 +116,7 @@ def query_for(p: dict, prefs: dict | None = None) -> Query:
 @st.cache_data(max_entries=5000, show_spinner=False)
 def job_skills(job_id: str) -> frozenset:
     """Normalized skills of a posting: the index's weak labels, or (56% of postings have none) CRF + O*NET now."""
-    c = jobs()
+    c = corpus_for(job_id)
     have = c.meta.iloc[c.pos[job_id]]["skills"]
     if have:
         return frozenset(have)
@@ -132,8 +139,62 @@ def overlap(q: Query, job_skills: set) -> dict:
             "coverage": (len(matched) / len(job_skills)) if job_skills else None}
 
 
-def rank(p: dict, prefs: dict, method: str = "cascade", k: int = 10) -> dict:
-    corpus = jobs()
+def adzuna_search(what: str, where: str, pages: int = 1, max_days: int | None = None) -> list[str]:
+    """Live postings for a keyword search (cached; one Adzuna call per uncached page). Returns their doc_ids."""
+    return adzuna.search(what, where, pages, max_days)["doc_id"].tolist()
+
+
+def posted_label(created: str) -> str:
+    """Adzuna's ISO `created` timestamp -> 'Posted Oct 28, 2026 (3 days ago)'."""
+    t = pd.to_datetime(created, utc=True, errors="coerce")
+    if pd.isna(t):
+        return ""
+    days = (pd.Timestamp.now(tz="UTC") - t).days
+    ago = "today" if days <= 0 else "1 day ago" if days == 1 else f"{days} days ago"
+    return f"Posted {t:%b %-d, %Y} ({ago})"
+
+
+_TITLE_NOISE = re.compile(r"\b(intern(ship)?|trainee|co-?op|sr|senior|jr|junior|lead|principal|staff|graduate|"
+                          r"student|i{1,3}|iv|[0-9]+)\b\.?", re.I)
+_DATE_ORDER = lambda e: (bool(e.get("is_current")) or str(e.get("end_date") or "").lower() == "present",
+                         str(e.get("end_date") or ""), str(e.get("start_date") or ""))
+
+
+def adzuna_keywords(p: dict) -> dict:
+    """Search terms suggested from the parsed CV: recent role titles without seniority words, the headline and the
+    predicted job family (the first two-word option is the default), plus the location's US state. The user picks
+    or edits them before any search."""
+    parsed = p.get("parsed") or {}
+    exps = sorted([e for e in parsed.get("experiences", []) if e.get("title")], key=_DATE_ORDER, reverse=True)
+    cand = parsed.get("candidate") or {}
+    options = {}
+    for text in [e["title"] for e in exps[:4]] + [cand.get("headline") or ""]:
+        words = " ".join(_TITLE_NOISE.sub(" ", re.split(r"[|,/(@–-]| at ", text)[0]).split()[:4]).lower()
+        if words and words not in options:
+            options[words] = None
+    family = (p.get("query") or {}).get("family")
+    if family and family.lower() not in options:
+        options[family.lower()] = None
+    options = list(options)
+    what = next((o for o in options if len(o.split()) >= 2), options[0] if options else "")
+    loc = cand.get("location") or next((e["location"] for e in exps if e.get("location")), None) or {}
+    state = (loc.get("state") or "").strip()
+    where = {v: k for k, v in adzuna.US_STATES.items()}.get(state.upper(), state if state in adzuna.US_STATES else "")
+    return {"what": what, "where": where, "options": options}
+
+
+def adzuna_calls_used() -> int:
+    return adzuna.calls_used()
+
+
+def rank(p: dict, prefs: dict, method: str = "cascade", k: int = 10, live_ids: list[str] | None = None) -> dict:
+    """Rank the Kaggle index, or (live_ids given) only those live Adzuna postings."""
+    if live_ids is not None:
+        from ranking import live_jobs
+        corpus = live_jobs.corpus()
+        prefs = {**prefs, "doc_ids": live_ids}
+    else:
+        corpus = jobs()
     q = query_for(p, prefs)
     if method == "cascade":
         out = live.rank(q, corpus, GraphView(), k=k)
@@ -160,18 +221,21 @@ def rank(p: dict, prefs: dict, method: str = "cascade", k: int = 10) -> dict:
         i = corpus.pos[r["doc_id"]]
         r.update(overlap(q, set(job_skills(r["doc_id"]))))
         r["industry"] = corpus.meta.iloc[i].get("industry")
+        if live_ids is not None:
+            r["posted"] = posted_label(corpus.meta.iloc[i].get("created", ""))
     out["method"] = method
+    out["source"] = "adzuna" if live_ids is not None else "kaggle"
     out["filtered_pool"] = int(corpus.filter_mask(q).sum())
     return out
 
 
 def job_text(job_id: str) -> str:
-    c = jobs()
+    c = corpus_for(job_id)
     return c.text[c.pos[job_id]]
 
 
 def job_meta(job_id: str) -> dict:
-    c = jobs()
+    c = corpus_for(job_id)
     return c.meta.iloc[c.pos[job_id]].to_dict()
 
 
@@ -206,7 +270,7 @@ def rewrites(facts: list[dict], title: str) -> list[dict]:
 
 
 def outreach_pack(p: dict, job_id: str) -> dict:
-    c = jobs()
+    c = corpus_for(job_id)
     m = c.meta.iloc[c.pos[job_id]]
     brief = outreach.company_brief(get_router(), job_id, c.meta, c.text[c.pos[job_id]], public=False)
     facts = explainer.bundle(p["cv_id"], job_id)
@@ -315,7 +379,7 @@ def result(name: str) -> dict | None:
         if p.exists():
             out = json.loads(p.read_text())
             if cand != name and isinstance(out, dict):
-                out["_labels_note"] = "Claude-judged labels (D30); the human spot-check agreement is on Annotation."
+                out["_labels_note"] = "Claude-judged labels (D30)."
             return out
     return None
 

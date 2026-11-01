@@ -115,7 +115,8 @@ def main():
                                                              "(D34) and the student's benchmark run")
     if expl and "faithfulness" in expl:
         for m, v in expl["faithfulness"].items():
-            add("R6 / RQ4", f"Faithfulness ({m})", "≥ 0.95", fmt_ci(v))
+            add("R6 / RQ4", f"Faithfulness ({m})" + (CLAUDE if expl.get("labels") == "claude" else ""), "≥ 0.95",
+                fmt_ci(v))
     else:
         add("R6 / RQ4", "Explanation faithfulness (60)", "≥ 0.95", "PENDING: fill supported in explanations_60.csv")
     if us:

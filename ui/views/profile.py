@@ -1,5 +1,6 @@
 """My profile: load a CV (upload, paste, or a public sample), parse it locally, review and correct the skills."""
 
+import re
 import pandas as pd
 import streamlit as st
 
@@ -97,6 +98,9 @@ with tabs[2]:
 with tabs[3]:
     if not projs:
         st.caption("No projects found.")
+        if "CRF" in str(p.get("parser")) and re.search(r"\bprojects?\b", p["text"], re.I):
+            st.info("Your CV mentions projects, but the fast CRF parser rarely finds them. Turn off **Fast parse "
+                    "(CRF)** under *Load a different CV* and parse again: the local LLM parser extracts projects.")
     for x in projs:
         st.markdown(f"**{x['name']}**")
         if x.get("skills_used"):

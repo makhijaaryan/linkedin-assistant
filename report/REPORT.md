@@ -32,12 +32,17 @@ would lose. We frame the task as evidence-grounded, two-sided matching under a m
 <!-- DATA -->
 
 **Labels.** The project ran with one team member, so test labels follow D30: Claude labels every public (Kaggle) item
-in separate columns, and the human owner spot-checks a fixed random sample of each set; results are reported as
-"Claude-judged" with the agreement figures in Section 6. CVs from `resume_corpus` are treated as private (D24): they
+in separate columns under the written annotation guide, and results are reported as "Claude-judged" (no human
+spot-check was done; see Section 6). CVs from `resume_corpus` are treated as private (D24): they
 are never sent to a hosted model and are not labeled by Claude (one accidental exposure of dedupe-pair fragments is
 disclosed in D35), so the ranking evaluation uses the 25 public profiles (500 judged pairs) and
 the extraction gold covers the 120 public test documents (75 postings, 45 Kaggle CVs). Long postings are annotated on
 their first 6,000 characters, and predictions found only past that point are not scored.
+
+**Live postings (not evaluated).** The app can also search current postings through the Adzuna API (D40). Only the
+search keywords and location leave the laptop; postings are cached and logged. Adzuna returns a ~500-character
+snippet per posting rather than the full text, so live jobs are a demonstration of the pipeline on fresh data and
+are not part of any reported result.
 
 ## 3. System
 
@@ -73,11 +78,13 @@ template explainer verbalizes these facts directly; the LLM explainer must cite 
 model rejects any sentence its cited edges do not support. Outreach is drafted only, and a follow-up reminder (.ics) is
 created only after explicit approval.
 
-**User interface.** A ten-page Streamlit app (layout and visual design adapted from Krish Naik's team frontend):
+**User interface.** A nine-page Streamlit app (layout and visual design adapted from Krish Naik's team frontend):
 profile upload and correction, job matches with removable filter chips and cited "Why this job?" panels, a skill-gap
 plan with critic-checked CV rewrites, an interactive knowledge-graph view with evidence inspector, grounded Q&A and
-outreach, a recruiter view, the router with live model swap and privacy guard, a results dashboard and the annotation
-spot-check tool.
+outreach, a recruiter view, the router with live model swap and privacy guard, and a results dashboard. Job matches
+can search either the Kaggle index or live Adzuna postings; for live search, keywords are suggested from the parsed
+CV (recent role titles without seniority words, the headline, the predicted job family) and the user can edit them
+and restrict the posting date before anything is sent.
 
 ## 4. Experimental setup
 
@@ -127,8 +134,8 @@ latency, and non-inferiority margins of 3 F1 points and 0.02 nDCG@10.
 
 <!-- AGREEMENT -->
 
-- **Claude-judged labels.** Test labels for relevance, gold extraction, dedupe, normalization and edges were produced
-  by Claude under a written guide and checked by the project owner on fixed random samples (agreement above). They
+- **Claude-judged labels.** Test labels for relevance, gold extraction, dedupe, normalization, edges and explanation
+  faithfulness were produced by Claude under a written guide, with no independent human check. They
   share blind spots with LLM extractors, so absolute scores may be optimistic for LLM systems; comparisons between
   systems are less affected than absolute numbers.
 - **Private CVs.** `resume_corpus` profiles (15 of 40) and test documents (30 of 150) have no Claude labels; the

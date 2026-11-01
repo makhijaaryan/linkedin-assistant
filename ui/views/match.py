@@ -43,8 +43,37 @@ if active:
             st.button(f"{label}  ✕", key=f"chip-{i}-{key}", on_click=drop_filter, args=(key, value),
                       help="Remove this filter")
 
+def set_keywords(text: str) -> None:
+    st.session_state["adz_what"] = text
+
+
 tab_rec, tab_cmp = st.tabs(["Recommendations", "Compare ranking methods"])
 with tab_rec:
+    source = st.radio("Jobs to search", ["adzuna", "kaggle"], horizontal=True, key="job_source",
+                      format_func={"kaggle": "Kaggle index (20,000 LinkedIn postings, Dec 2023 – Apr 2024)",
+                                   "adzuna": "Live jobs (Adzuna)"}.get)
+    if source == "adzuna":
+        if st.session_state.get("adz_for") != p["cv_id"]:     # new CV: suggest keywords from its parse
+            sugg = svc.adzuna_keywords(p)
+            st.session_state.update(adz_what=sugg["what"], adz_where=sugg["where"], adz_options=sugg["options"],
+                                    adz_for=p["cv_id"])
+        a1, a2, a3, a4 = st.columns([3, 2, 1, 1])
+        what = a1.text_input("Keywords", key="adz_what", placeholder="e.g. software engineer")
+        where = a2.text_input("Location (optional)", key="adz_where", placeholder="e.g. Arizona or Phoenix")
+        pages = a3.selectbox("Postings", [1, 2], format_func=lambda n: f"{50 * n}", key="adz_pages",
+                             help="50 postings per Adzuna call")
+        max_days = a4.selectbox("Date posted", [None, 1, 3, 7, 14, 30], key="adz_days",
+                                format_func=lambda d: "Any time" if d is None else "Last 24 hours" if d == 1
+                                else f"Last {d} days")
+        if st.session_state.get("adz_options"):
+            st.caption("Suggested from your CV (recent roles, headline, job family); pick one or type your own:")
+            with st.container(horizontal=True, key="adz-suggest"):
+                for i, o in enumerate(st.session_state["adz_options"][:6]):
+                    st.button(o, key=f"adz-opt-{i}", on_click=set_keywords, args=(o,),
+                              type="primary" if o == st.session_state.get("adz_what") else "secondary")
+        st.caption(f"Only the keywords and location shown are sent to Adzuna, never your CV text. A repeated search within 6 "
+                   f"hours reuses the cache. Adzuna returns a ~500-character snippet of each posting, so skill "
+                   f"matching has less text to work with. Adzuna calls used so far: {svc.adzuna_calls_used()}.")
     c1, c2, c3 = st.columns([3, 1, 1])
     method = c1.selectbox("Ranking method", list(svc.METHODS), format_func=svc.METHODS.get)
     k = c2.number_input("Results", 3, 20, 10)
@@ -52,8 +81,22 @@ with tab_rec:
                         help="Off: template sentences built from graph facts (instant). On: local LLM writes the "
                              "explanation and the critic rejects any sentence a cited edge doesn't support.")
     if st.button("Find matches", type="primary") or st.session_state.pop("rerun_match", False):
+        live_ids = None
+        if source == "adzuna":
+            if not (st.session_state.get("adz_what") or "").strip():
+                st.warning("Enter keywords for the Adzuna search.")
+                st.stop()
+            with st.spinner("Fetching live postings from Adzuna…"):
+                try:
+                    live_ids = svc.adzuna_search(what, where, int(pages), max_days)
+                except Exception as e:
+                    st.error(f"Adzuna search failed: {e}")
+                    st.stop()
+            if not live_ids:
+                st.warning("Adzuna returned no postings for this search.")
+                st.stop()
         with st.spinner("Filtering, retrieving, fusing and re-ranking…"):
-            st.session_state["matches"] = svc.rank(p, prefs, method, int(k))
+            st.session_state["matches"] = svc.rank(p, prefs, method, int(k), live_ids=live_ids)
         st.session_state.pop("explain", None)
     res = st.session_state.get("matches")
     if not res:
@@ -64,7 +107,8 @@ with tab_rec:
                     for s in res["stages"])[:-len("<span class='om-arrow'>→</span>")]
     t = res.get("timing", {})
     st.markdown(f"<div class='om-funnel'>{steps}</div>", unsafe_allow_html=True)
-    st.caption(f"{res['filtered_pool']:,} jobs passed the filters" +
+    st.caption(("Live Adzuna postings · " if res.get("source") == "adzuna" else "") +
+               f"{res['filtered_pool']:,} jobs passed the filters" +
                (f" · ranked in {t['total_s']:.2f}s (cross-encoder {t.get('cross_encoder_s', 0):.2f}s)"
                 if t.get("total_s") else ""))
     if not res["results"]:
@@ -73,7 +117,7 @@ with tab_rec:
     for r in res["results"]:
         with st.container(border=True):
             meta = " · ".join(html.escape(str(x)) for x in [r.get("company"), r.get("location"), r.get("work_mode"),
-                                                             r.get("seniority"), r.get("industry")]
+                                                             r.get("seniority"), r.get("industry"), r.get("posted")]
                               if x and x != "Unknown")
             cov = r.get("coverage")
             score_badge = badge_html(f"score {r['score']:.3f}", "info", "0.85rem")
@@ -100,8 +144,12 @@ with tab_rec:
             if b4.button("Outreach", key=f"out-{r['doc_id']}"):
                 st.session_state["selected_job"] = r["doc_id"]
                 st.switch_page("views/assistant.py")
-            with b1.popover("Job description"):
-                st.write(svc.job_text(r["doc_id"])[:4000])
+            with st.expander("Job description"):
+                st.markdown(svc.job_text(r["doc_id"])[:6000].replace("\n", "  \n"))
+                url = svc.job_meta(r["doc_id"]).get("url") if r["doc_id"].startswith("adz_") else None
+                if url:
+                    st.caption("Adzuna shows only a snippet of the posting.")
+                    st.link_button("Full posting on Adzuna", url)
             e = explained.get(r["doc_id"])
             if e:
                 llm = e.get("llm")
@@ -109,7 +157,10 @@ with tab_rec:
                 src = "LLM (local) · critic-verified" if llm and llm.get("sentences") else "template from graph facts"
                 st.markdown(f"**Why this job?** {badge_html(src, 'good' if llm and llm.get('sentences') else 'info')}",
                             unsafe_allow_html=True)
-                if not sents:
+                if not sents and r["doc_id"].startswith("adz_"):
+                    st.caption("Adzuna gives only a ~500-character snippet, and this one states no requirements, so "
+                               "the graph has no facts to explain from. Open the full posting on Adzuna.")
+                elif not sents:
                     st.caption("The graph has no shared facts for this pair yet (no matched requirement, gap or "
                                "related skill), so nothing can be claimed.")
                 for s in sents:

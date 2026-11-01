@@ -81,7 +81,7 @@ def labels() -> tuple[float, str]:
 
 FRONTEND = ["ui/components.py", "ui/theme.css", "ui/views/dashboard.py", "ui/views/match.py", "ui/views/profile.py",
             "ui/views/skill_gap.py", "ui/views/graph.py", "ui/views/assistant.py", "ui/views/models.py",
-            "ui/views/research.py", "ui/views/annotate.py", "ui/views/candidates.py"]
+            "ui/views/research.py", "ui/views/candidates.py"]
 
 
 def frontend() -> tuple[float, str]:

@@ -1,0 +1,84 @@
+{
+ "automatic": {
+  "llm:asu/gpt-oss-120b": {
+   "explanations": 60,
+   "sentences_shown": 188,
+   "sentences_rejected_by_critic": 114,
+   "all_shown_cited": true,
+   "empty_explanations": 3
+  },
+  "llm:azure/gpt-5-mini": {
+   "explanations": 60,
+   "sentences_shown": 231,
+   "sentences_rejected_by_critic": 70,
+   "all_shown_cited": true,
+   "empty_explanations": 2
+  },
+  "llm:ollama/llama3.1:8b": {
+   "explanations": 60,
+   "sentences_shown": 189,
+   "sentences_rejected_by_critic": 164,
+   "all_shown_cited": true,
+   "empty_explanations": 6
+  },
+  "template": {
+   "explanations": 60,
+   "sentences_shown": 244,
+   "sentences_rejected_by_critic": 0,
+   "all_shown_cited": true,
+   "empty_explanations": 2
+  }
+ },
+ "labels": "claude",
+ "faithfulness": {
+  "llm:asu/gpt-oss-120b": {
+   "p_hat": 0.9148936170212766,
+   "ci_low": 0.8662351965179904,
+   "ci_high": 0.9469362678723343,
+   "n": 188,
+   "hallucination_rate": 0.08510638297872342,
+   "explanation_level_all_supported": 0.7192982456140351
+  },
+  "llm:azure/gpt-5-mini": {
+   "p_hat": 0.9826839826839827,
+   "ci_low": 0.9563307388166019,
+   "ci_high": 0.9932460570346991,
+   "n": 231,
+   "hallucination_rate": 0.017316017316017285,
+   "explanation_level_all_supported": 0.9310344827586207
+  },
+  "llm:ollama/llama3.1:8b": {
+   "p_hat": 0.8888888888888888,
+   "ci_low": 0.8361149021920358,
+   "ci_high": 0.926169312514523,
+   "n": 189,
+   "hallucination_rate": 0.11111111111111116,
+   "explanation_level_all_supported": 0.6481481481481481
+  },
+  "template": {
+   "p_hat": 1.0,
+   "ci_low": 0.9845003380831723,
+   "ci_high": 1.0,
+   "n": 244,
+   "hallucination_rate": 0.0,
+   "explanation_level_all_supported": 1.0
+  }
+ },
+ "mcnemar_vs_proprietary": {
+  "llm:asu/gpt-oss-120b": {
+   "a_only": 2,
+   "b_only": 14,
+   "p": 0.004180908203125,
+   "odds_ratio": 0.1724137931034483,
+   "p_holm": 0.004180908203125
+  },
+  "llm:ollama/llama3.1:8b": {
+   "a_only": 2,
+   "b_only": 17,
+   "p": 0.000728607177734375,
+   "odds_ratio": 0.14285714285714285,
+   "p_holm": 0.00145721435546875
+  }
+ },
+ "target": 0.95
+}

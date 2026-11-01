@@ -101,7 +101,7 @@ with tabs[3]:
 with tabs[4]:
     ex = svc.result("explanation_eval.json")
     if not ex:
-        pending("needs the 60-explanation faithfulness sheet (Annotation page).")
+        pending("needs the 60-explanation faithfulness sheet (`python -m eval.explanation_eval --score`).")
     else:
         if "faithfulness" in ex:
             f = pd.DataFrame({m: {"faithfulness": v["p_hat"], "ci_low": v["ci_low"], "ci_high": v["ci_high"],

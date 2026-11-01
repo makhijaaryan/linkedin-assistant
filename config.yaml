@@ -20,7 +20,7 @@ providers:            # rpm: client-side throttle under the free-tier limit; 429
 
 # Only documents from these sources may go to hosted providers (D2: "anonymized Kaggle text").
 # Anything else (resume_corpus, uploaded CVs) is private -> local Ollama only.
-public_sources: [kaggle_linkedin_postings, kaggle_resume_dataset]
+public_sources: [kaggle_linkedin_postings, kaggle_resume_dataset, adzuna]   # adzuna: live public job ads
 
 # task -> provider/model. Real CVs (private data) may only use providers with private_ok: true.
 routes:
