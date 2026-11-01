@@ -7,9 +7,9 @@ import streamlit as st
 from streamlit_agraph import Config, Edge, Node, agraph
 
 from ui import services as svc
-from ui.components import require_profile
+from ui.components import page_header, require_profile
 
-st.title("Knowledge graph")
+page_header("Knowledge graph", "Explore how your CV and a job connect: skills, requirements, roles and the evidence behind each link.")
 p = require_profile()
 if not p or not p.get("parsed"):
     st.stop()

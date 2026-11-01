@@ -4,9 +4,9 @@ import pandas as pd
 import streamlit as st
 
 from ui import services as svc
-from ui.components import SOURCE_LABEL, badge_html
+from ui.components import page_header, SOURCE_LABEL, badge_html
 
-st.title("Find candidates")
+page_header("Find candidates", "Pick a job posting and rank the indexed CVs for it.")
 st.caption("Ranks the 4,981 indexed CVs for one posting. CV text is only shown for public Kaggle resumes.")
 jobs = svc.jobs()
 c1, c2 = st.columns([3, 1])

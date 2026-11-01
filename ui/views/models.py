@@ -7,9 +7,9 @@ import streamlit as st
 
 from router.router import PrivacyError, get_router
 from ui import services as svc
-from ui.components import badge_html, provider_kind
+from ui.components import page_header, badge_html, provider_kind
 
-st.title("Models & router")
+page_header("Models & router", "Which model handles each task, and the privacy rules that apply.")
 router = get_router()
 cfg = router.cfg
 

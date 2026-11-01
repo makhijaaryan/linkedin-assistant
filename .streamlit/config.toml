@@ -1,5 +1,16 @@
 [theme]
+# Light is the default; the in-app toggle switches these options at runtime (ui/components.py, THEMES).
+base = "light"
 primaryColor = "#0a66c2"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f6fa"
+textColor = "#0f172a"
+borderColor = "#e2e8f0"
+linkColor = "#0a66c2"
+baseRadius = "0.6rem"
+buttonRadius = "0.6rem"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 
 [server]
 maxUploadSize = 5

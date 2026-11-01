@@ -8,9 +8,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from ui import services as svc
-from ui.components import badge_html, chips, empty_state, privacy_note, require_profile
+from ui.components import page_header, badge_html, chips, empty_state, privacy_note, require_profile
 
-st.title("Skill gap")
+page_header("Skill gap", "What a job asks for, what your CV shows, and how to close the gap.")
 p = require_profile()
 if not p or not p.get("parsed"):
     st.stop()
@@ -88,7 +88,7 @@ with t4:
             st.session_state.setdefault("rewrites", {})[job_id] = svc.rewrites(facts, options[job_id].split(". ", 1)[-1])
     for w in st.session_state.get("rewrites", {}).get(job_id, []):
         ok = w["verdict"] == "approved"
-        st.markdown(f"{'✅' if ok else '⛔'} **Original:** {w['original']}  \n**Rewrite:** {w['rewrite']}  \n*{w['reason']}*")
+        st.markdown(f"{':material/check_circle:' if ok else ':material/block:'} **Original:** {w['original']}  \n**Rewrite:** {w['rewrite']}  \n*{w['reason']}*")
 
 with st.expander("All facts (with edge citations)"):
     st.dataframe(pd.DataFrame(facts), hide_index=True, width="stretch")

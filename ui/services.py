@@ -170,9 +170,9 @@ def adzuna_keywords(p: dict) -> dict:
     options = {}
     for text in [e["title"] for e in exps[:4]] + [cand.get("headline") or ""]:
         words = " ".join(_TITLE_NOISE.sub(" ", re.split(r"[|,/(@–-]| at ", text)[0]).split()[:4]).lower()
-        if words and words not in options:
+        if words and words not in options and re.fullmatch(r"[a-z&+# ]+", words) and len(text.split()) <= 8:
             options[words] = None
-    family = (p.get("query") or {}).get("family")
+    family = query_for(p).family if p.get("parsed") else None
     if family and family.lower() not in options:
         options[family.lower()] = None
     options = list(options)

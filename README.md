@@ -122,9 +122,12 @@ KMP_DUPLICATE_LIB_OK=TRUE streamlit run ui/app.py      # http://localhost:8501
 ```
 
 Needs Neo4j and Ollama running and steps 2–3, 10 and 12 done (the indexes, the graph and the LambdaMART models).
+Navigation is a top bar (Home, Job seeker, Recruiter, Research). A status strip shows the active CV and its
+privacy status, and a toggle switches between light (default) and dark mode.
 
 | Page                 | What it does                                                                                                                                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Home                 | Landing page: what the app does, how it works, and two ways to start (upload a CV, or try a public sample in one click) |
 | Dashboard            | Profile summary, top matches, index and graph statistics                                                                                                                                                           |
 | My profile           | Upload a CV (PDF/DOCX/TXT), paste text, or pick a public Kaggle sample; parse with the CRF (seconds) or the local LLM (1–3 min); review and correct skills                                                         |
 | Job matches          | Search the Kaggle index (20,000 LinkedIn postings, Dec 2023 – Apr 2024) or **live Adzuna jobs**; filters; any ranking method; per-card skill overlap, job description, score breakdown and a cited "Why this job?" |

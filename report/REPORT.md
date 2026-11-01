@@ -78,8 +78,8 @@ template explainer verbalizes these facts directly; the LLM explainer must cite 
 model rejects any sentence its cited edges do not support. Outreach is drafted only, and a follow-up reminder (.ics) is
 created only after explicit approval.
 
-**User interface.** A nine-page Streamlit app (layout and visual design adapted from Krish Naik's team frontend):
-profile upload and correction, job matches with removable filter chips and cited "Why this job?" panels, a skill-gap
+**User interface.** A ten-page Streamlit app with top navigation, a landing page and a light/dark theme (card
+design adapted from Krish Naik's team frontend): profile upload and correction, job matches with removable filter chips and cited "Why this job?" panels, a skill-gap
 plan with critic-checked CV rewrites, an interactive knowledge-graph view with evidence inspector, grounded Q&A and
 outreach, a recruiter view, the router with live model swap and privacy guard, and a results dashboard. Job matches
 can search either the Kaggle index or live Adzuna postings; for live search, keywords are suggested from the parsed

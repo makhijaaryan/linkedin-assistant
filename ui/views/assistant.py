@@ -6,9 +6,9 @@ import html
 import streamlit as st
 
 from ui import services as svc
-from ui.components import badge_html, empty_state, privacy_note, require_profile
+from ui.components import page_header, badge_html, empty_state, privacy_note, require_profile
 
-st.title("Assistant & outreach")
+page_header("Assistant & outreach", "Ask about a match and draft a message to the recruiter. Answers use only facts from your CV and the job post.")
 p = require_profile()
 if not p or not p.get("parsed"):
     st.stop()

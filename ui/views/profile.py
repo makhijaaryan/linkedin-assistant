@@ -5,9 +5,9 @@ import pandas as pd
 import streamlit as st
 
 from ui import services as svc
-from ui.components import SOURCE_LABEL, badge_html, chips, chips_html, empty_state, privacy_note, profile
+from ui.components import page_header, SOURCE_LABEL, badge_html, chips, chips_html, empty_state, privacy_note, profile
 
-st.title("My profile")
+page_header("My profile", "Add your CV, check what was extracted, and correct your skills.")
 
 with st.expander("Load a CV" if not profile() else "Load a different CV", expanded=not profile()):
     t_up, t_paste, t_sample = st.tabs(["Upload", "Paste text", "Public sample (demo)"])

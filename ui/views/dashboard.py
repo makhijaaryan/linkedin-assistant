@@ -6,9 +6,10 @@ import plotly.express as px
 import streamlit as st
 
 from ui import services as svc
-from ui.components import badge_html, chips, empty_state, hero, nav_link, profile, row_html, score_tone, stat, tile
+from ui.components import (badge_html, chips, empty_state, hero, nav_link, page_header, profile, row_html, score_tone,
+                           stat, tile)
 
-st.title("Dashboard")
+page_header("Dashboard", "Your profile, your best matches and the job market at a glance.")
 p = profile()
 res = st.session_state.get("matches")
 BLUES = ["#0a66c2", "#3b8be0", "#70b5f9", "#a8d4ff", "#d0e8ff", "#e8f3ff"]

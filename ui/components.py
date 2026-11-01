@@ -25,10 +25,72 @@ SOURCE_LABEL = {"kaggle_linkedin_postings": "LinkedIn (Kaggle 2023–24)", "kagg
                 "resume_corpus": "Resume corpus (private)", "upload": "Your upload"}
 
 
+# Streamlit theme options per mode. Light is the default (.streamlit/config.toml); the toggle sets these options at
+# runtime and reruns, which re-sends the theme to the browser. Options are process-wide, which suits a local app.
+THEMES = {
+    "light": {"base": "light", "primaryColor": "#0a66c2", "backgroundColor": "#ffffff",
+              "secondaryBackgroundColor": "#f3f6fa", "textColor": "#0f172a", "borderColor": "#e2e8f0",
+              "linkColor": "#0a66c2"},
+    "dark": {"base": "dark", "primaryColor": "#4d9bff", "backgroundColor": "#0b1220",
+             "secondaryBackgroundColor": "#141d2f", "textColor": "#e6eaf2", "borderColor": "#253149",
+             "linkColor": "#6aaeff"},
+}
+# Colours for this app's own HTML (cards, badges, hero), per mode.
+CSS_VARS = {
+    "light": {"bg": "#ffffff", "surface": "#f3f6fa", "card": "#ffffff", "text": "#0f172a", "muted": "#64748b",
+              "line": "#e2e8f0", "accent": "#0a66c2", "accent-soft": "#e8f1fb", "shadow": "0 1px 2px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.05)",
+              "good-bg": "#e7f6ec", "good-fg": "#1f7a3f", "warn-bg": "#fdf3e1", "warn-fg": "#9a5b06",
+              "neutral-bg": "#eef1f5", "neutral-fg": "#475569", "bad-bg": "#fdecea", "bad-fg": "#b42318",
+              "info-bg": "#e8f1fb", "info-fg": "#0a5aad",
+              "hero-from": "#0a66c2", "hero-to": "#0b4f99"},
+    "dark": {"bg": "#0b1220", "surface": "#141d2f", "card": "#111a2b", "text": "#e6eaf2", "muted": "#94a3b8",
+             "line": "#253149", "accent": "#4d9bff", "accent-soft": "rgba(77,155,255,.14)", "shadow": "0 1px 2px rgba(0,0,0,.4)",
+             "good-bg": "rgba(52,199,89,.15)", "good-fg": "#5fd38a", "warn-bg": "rgba(245,166,35,.16)",
+             "warn-fg": "#f5b452", "neutral-bg": "rgba(148,163,184,.14)", "neutral-fg": "#b6c2d3",
+             "bad-bg": "rgba(240,82,82,.16)", "bad-fg": "#ff7b72", "info-bg": "rgba(77,155,255,.16)",
+             "info-fg": "#7db8ff", "hero-from": "#1d4ed8", "hero-to": "#0a3d7a"},
+}
+
+
+def theme_mode() -> str:
+    return st.session_state.setdefault("theme_mode", "light")
+
+
+def _apply_theme(mode: str) -> None:
+    for key, value in THEMES[mode].items():
+        st._config.set_option(f"theme.{key}", value)
+
+
+def sync_theme() -> None:
+    """Make the server's theme match this session's mode (a new session starts in light mode). Streamlit sends the
+    theme when a run starts, before widget callbacks, so a toggle needs one more run to reach the browser."""
+    mode = theme_mode()
+    if st.session_state.pop("_theme_changed", False) or \
+            st._config.get_option("theme.backgroundColor") != THEMES[mode]["backgroundColor"]:
+        _apply_theme(mode)
+        st.rerun()
+
+
+def _toggle_theme() -> None:
+    st.session_state["theme_mode"] = "dark" if st.session_state.get("theme_dark") else "light"
+    st.session_state["_theme_changed"] = True
+
+
+def theme_toggle() -> None:
+    st.toggle("Dark mode", value=theme_mode() == "dark", key="theme_dark", on_change=_toggle_theme)
+
+
 def load_theme() -> None:
     css = ROOT / "ui" / "theme.css"
-    if css.exists():
-        st.markdown(f"<style>{css.read_text()}</style>", unsafe_allow_html=True)
+    palette = ";".join(f"--om-{k}:{v}" for k, v in CSS_VARS[theme_mode()].items())
+    st.markdown(f"<style>:root{{{palette}}}\n{css.read_text() if css.exists() else ''}</style>",
+                unsafe_allow_html=True)
+
+
+def page_header(title: str, subtitle: str = "") -> None:
+    st.title(title)
+    if subtitle:
+        st.caption(subtitle)
 
 
 def badge_html(text, kind: str = "neutral", size: str = "0.82rem") -> str:
@@ -117,8 +179,8 @@ def privacy_note(p: dict | None) -> None:
     if not p:
         return
     if p.get("private", True):
-        st.caption("🔒 Private CV: parsed, explained and checked on local Ollama only (D2). Nothing about it is sent "
-                   "to a hosted model.")
+        st.caption(":material/lock: Private CV: parsed, explained and checked on this computer only (local Ollama). "
+                   "Nothing about it is sent to a hosted model.")
     else:
         st.caption("Public Kaggle CV (anonymized): still explained locally; job postings may be parsed on ASU Voyager.")
 

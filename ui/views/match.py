@@ -7,9 +7,9 @@ import pandas as pd
 import streamlit as st
 
 from ui import services as svc
-from ui.components import (badge_html, chips_html, empty_state, privacy_note, require_profile, score_tone)
+from ui.components import (page_header, badge_html, chips_html, empty_state, privacy_note, require_profile, score_tone)
 
-st.title("Job matches")
+page_header("Job matches", "Jobs ranked for your CV, with the reasons behind each match.")
 p = require_profile()
 if not p or not p.get("parsed"):
     st.stop()
@@ -40,7 +40,7 @@ active = [("f_states", s, f"State: {s}") for s in states] + \
 if active:
     with st.container(horizontal=True, key="filter-chips"):
         for i, (key, value, label) in enumerate(active):
-            st.button(f"{label}  ✕", key=f"chip-{i}-{key}", on_click=drop_filter, args=(key, value),
+            st.button(label, icon=":material/close:", key=f"chip-{i}-{key}", on_click=drop_filter, args=(key, value),
                       help="Remove this filter")
 
 def set_keywords(text: str) -> None:
@@ -106,7 +106,8 @@ with tab_rec:
     steps = "".join(f"<span class='om-step'>{html.escape(s)}</span><span class='om-arrow'>→</span>"
                     for s in res["stages"])[:-len("<span class='om-arrow'>→</span>")]
     t = res.get("timing", {})
-    st.markdown(f"<div class='om-funnel'>{steps}</div>", unsafe_allow_html=True)
+    with st.expander("How these were ranked"):
+        st.markdown(f"<div class='om-funnel'>{steps}</div>", unsafe_allow_html=True)
     st.caption(("Live Adzuna postings · " if res.get("source") == "adzuna" else "") +
                f"{res['filtered_pool']:,} jobs passed the filters" +
                (f" · ranked in {t['total_s']:.2f}s (cross-encoder {t.get('cross_encoder_s', 0):.2f}s)"
@@ -120,28 +121,30 @@ with tab_rec:
                                                              r.get("seniority"), r.get("industry"), r.get("posted")]
                               if x and x != "Unknown")
             cov = r.get("coverage")
-            score_badge = badge_html(f"score {r['score']:.3f}", "info", "0.85rem")
             st.markdown(
                 f"<div class='om-job-head'><span class='om-job-title'>{r['rank']}. {html.escape(r.get('title') or '')}"
-                f"</span><span>{score_badge}"
+                f"</span><span>"
                 + (badge_html(f'{cov:.0%} of listed skills', score_tone(cov), '0.85rem') if cov is not None else "")
                 + f"</span></div><div class='om-job-meta'>{meta}</div>"
                 f"<div class='om-job-skills'><span class='om-job-label'>Matched</span><span>"
-                + (chips_html(r["matched"], "good", limit=8) or "<span class='om-job-none'>no normalized skill overlap</span>")
+                + (chips_html(r["matched"], "good", limit=8) or "<span class='om-job-none'>no listed skill in common</span>")
                 + "</span></div><div class='om-job-skills'><span class='om-job-label'>Missing</span><span>"
                 + (chips_html(r["missing"], "neutral", limit=8) or "<span class='om-job-none'>none listed</span>")
                 + "</span></div>", unsafe_allow_html=True)
-            b1, b2, b3, b4 = st.columns([2, 1, 1, 1])
-            if b2.button("Why this job?", key=f"why-{r['doc_id']}"):
+            with st.container(horizontal=True, key=f"actions-{r['doc_id']}"):
+                why = st.button("Why this job?", key=f"why-{r['doc_id']}", type="primary", icon=":material/fact_check:")
+                gap = st.button("Skill gap", key=f"gap-{r['doc_id']}", icon=":material/trending_up:")
+                out = st.button("Outreach", key=f"out-{r['doc_id']}", icon=":material/mail:")
+            if why:
                 with st.spinner("Parsing the posting into the graph if needed, then explaining…"):
                     try:
                         explained[r["doc_id"]] = svc.explain(p, r["doc_id"], use_llm)
                     except Exception as e:
                         st.error(f"Explanation failed: {type(e).__name__}: {str(e)[:200]}")
-            if b3.button("Skill gap", key=f"gap-{r['doc_id']}"):
+            if gap:
                 st.session_state["selected_job"] = r["doc_id"]
                 st.switch_page("views/skill_gap.py")
-            if b4.button("Outreach", key=f"out-{r['doc_id']}"):
+            if out:
                 st.session_state["selected_job"] = r["doc_id"]
                 st.switch_page("views/assistant.py")
             with st.expander("Job description"):
@@ -176,6 +179,7 @@ with tab_rec:
                     st.dataframe(pd.DataFrame(e["facts"]), hide_index=True, width="stretch")
             if r.get("features"):
                 with st.expander("How the score was computed"):
+                    st.caption(f"Ranking score {r['score']:.3f} (only the order matters). Inputs:")
                     f = pd.Series({k_: v for k_, v in r["features"].items() if v is not None}, name="value")
                     st.dataframe(f.to_frame(), width="stretch")
 

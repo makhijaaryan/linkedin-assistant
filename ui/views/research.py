@@ -6,9 +6,9 @@ import plotly.express as px
 import streamlit as st
 
 from ui import services as svc
-from ui.components import badge_html
+from ui.components import page_header, badge_html
 
-st.title("Results")
+page_header("Results", "Evaluation results for the research questions, built from the frozen test sets.")
 pr = svc.progress()
 c = st.columns(5)
 c[0].metric("Overall", f"{pr['overall']:.0%}")
@@ -20,7 +20,7 @@ summary = svc.ROOT / "eval/results/SUMMARY.md"
 with st.expander("Targets (Table II, from eval/results/SUMMARY.md)", expanded=True):
     if summary.exists():
         txt = summary.read_text().split("## Router cost")[0]
-        st.markdown(txt.replace("PENDING", "⏳ PENDING"))
+        st.markdown(txt)
         st.caption("Regenerate with `python -m eval.report`.")
     else:
         st.info("No summary yet: run `python -m eval.report`.")
